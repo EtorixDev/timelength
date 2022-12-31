@@ -50,9 +50,24 @@ class ParsedTimeLength(object):
         self.valid_values = valid_values
 
 class TimeLength(object):
-    def __init__(self, passed_value, strict = False):
+    def __init__(self, passed_value, strict = False, custom_millisecond = Millisecond(), custom_second = Second(), 
+        custom_minute = Minute(), custom_hour = Hour(), custom_day = Day(), custom_week = Week(), custom_month = Month(), 
+        custom_year = Year(), custom_decade = Decade(), custom_century = Century()):
         self.passed_value = passed_value
         self.strict = strict
+        self.Millisecond = custom_millisecond
+        self.Second = custom_second
+        self.Minute = custom_minute
+        self.Hour = custom_hour
+        self.Day = custom_day
+        self.Week = custom_week
+        self.Month = custom_month
+        self.Year = custom_year
+        self.Decade = custom_decade
+        self.Century = custom_century
+        self.__scales = [self.Millisecond, self.Second, self.Minute, self.Hour, self.Day, self.Week, self.Month, self.Year, self.Decade, self.Century]
+        self.__abbreviations = [term for sublist in self.__scales for term in sublist.terms]
+        
         self.__parsed_time_length = self.__parse(self.passed_value, self.strict)
         self.__valid_values = self.__parsed_time_length.valid_values
         self.total_seconds = self.__parsed_time_length.total_seconds
@@ -132,7 +147,7 @@ class TimeLength(object):
         input_scale = None
         preceeding_num = False
         preceeding_alpha = True
-        invalid_values = [item for item in potential_values if item and not isfloat(item) and item not in ABBREVIATIONS]
+        invalid_values = [item for item in potential_values if item and not isfloat(item) and item not in self.__abbreviations]
         potential_values = [item for item in potential_values if item and item not in invalid_values]
         # If invalid and strict, error
         # If not strict, ignore invalid and proceed
@@ -150,10 +165,10 @@ class TimeLength(object):
                     raise InvalidOrder(f"Input TimeLength \"{passed_value}\" starts with a Scale rather than a Value: {potential_values}")
                 elif preceeding_alpha is True and strict is True:
                     raise InvalidOrder(f"Input TimeLength \"{passed_value}\" contains multiple subsequent Scales with no paired Values: {potential_values}")
-                if preceeding_num and item in ABBREVIATIONS:
+                if preceeding_num and item in self.__abbreviations:
                     # Calculate proper Value THEN Scale pairs
                     input_scale = item
-                    for scale in SCALES:
+                    for scale in self.__scales:
                         if input_scale in scale.terms:
                             total_seconds += input_length * scale.scale
                             if input_length == 1:
@@ -176,31 +191,31 @@ class TimeLength(object):
         return ParsedTimeLength(total_seconds, valid_values)
 
     def to_milliseconds(self, max_precision = 2):
-        return round(self.total_seconds / float(Millisecond().scale), max_precision)
+        return round(self.total_seconds / float(self.Millisecond.scale), max_precision)
 
     def to_seconds(self, max_precision = 2):
         return round(self.total_seconds, max_precision)
 
     def to_minutes(self, max_precision = 2):
-        return round(self.total_seconds / float(Minute().scale), max_precision)
+        return round(self.total_seconds / float(self.Minute.scale), max_precision)
 
     def to_hours(self, max_precision = 2):
-        return round(self.total_seconds / float(Hour().scale), max_precision)
+        return round(self.total_seconds / float(self.Hour.scale), max_precision)
 
     def to_days(self, max_precision = 2):
-        return round(self.total_seconds / float(Day().scale), max_precision)
+        return round(self.total_seconds / float(self.Day.scale), max_precision)
 
     def to_weeks(self, max_precision = 2):
-        return round(self.total_seconds / float(Week().scale), max_precision)
+        return round(self.total_seconds / float(self.Week.scale), max_precision)
 
     def to_months(self, max_precision = 2):
-        return round(self.total_seconds / float(Month().scale), max_precision)
+        return round(self.total_seconds / float(self.Month.scale), max_precision)
 
     def to_years(self, max_precision = 2):
-        return round(self.total_seconds / float(Year().scale), max_precision)
+        return round(self.total_seconds / float(self.Year.scale), max_precision)
 
     def to_decades(self, max_precision = 2):
-        return round(self.total_seconds / float(Decade().scale), max_precision)
+        return round(self.total_seconds / float(self.Decade.scale), max_precision)
 
     def to_centuries(self, max_precision = 2):
-        return round(self.total_seconds / float(Century().scale), max_precision)
+        return round(self.total_seconds / float(self.Century.scale), max_precision)

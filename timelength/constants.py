@@ -1,5 +1,3 @@
-from timelength.scales import *
-
 SEPERATORS = [
     ",",
     " ",
@@ -9,7 +7,3 @@ SEPERATORS = [
 CONNECTORS = [
     "and"
 ]
-
-SCALES = [Millisecond(), Second(), Minute(), Hour(), Day(), Week(), Month(), Year(), Decade(), Century()]
-
-ABBREVIATIONS = [item for sublist in SCALES for item in sublist.terms]
