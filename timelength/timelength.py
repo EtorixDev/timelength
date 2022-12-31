@@ -73,7 +73,7 @@ class TimeLength(object):
         last_alphanum = None
 
         for index, char in enumerate(passed_value):
-            # Skip iterations due to decimal encounter
+            # Skip iterations due to decimal or non-alphanumeric encounter
             if skip_iteration > 0:
                 skip_iteration -= 1
                 continue
