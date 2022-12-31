@@ -9,7 +9,7 @@ setup(
     version = "1.0.1",
     url = "https://github.com/Etorix0005/timelength",
     license = "MIT License",
-    author = "etorix.dev",
+    author = "Etorix",
     author_email = "admin@etorix.dev",
     description = "A Python package to parse human readable lengths of time.",
     long_description_content_type = "text/markdown",
