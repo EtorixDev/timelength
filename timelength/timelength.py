@@ -185,7 +185,7 @@ class TimeLength(object):
                 input_length = None
                 input_scale = None
         
-        if not valid_values:
+        if not valid_values and self.strict:
             raise InvalidValue(f"Input TimeLength \"{passed_value}\" contains no valid Value and Scale pairs.")
 
         return ParsedTimeLength(total_seconds, valid_values)
@@ -194,7 +194,7 @@ class TimeLength(object):
         return round(self.total_seconds / float(self.Millisecond.scale), max_precision)
 
     def to_seconds(self, max_precision = 2):
-        return round(self.total_seconds, max_precision)
+        return round(self.total_seconds / float(self.Second.scale), max_precision)
 
     def to_minutes(self, max_precision = 2):
         return round(self.total_seconds / float(self.Minute.scale), max_precision)
