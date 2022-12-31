@@ -34,32 +34,32 @@ from timelength import TimeLength
 
 time_string = "5.5min, and 10 seconds"
 
-parsed_lenth = TimeLength(time_string)
-parsed_lenth.total_seconds
+parsed_length = TimeLength(time_string)
+parsed_length.total_seconds
 # >>> 340.0
-parsed_lenth.to_hours()
+parsed_length.to_hours()
 # >>> 0.09
-parsed_lenth.to_hours(max_precision = 5)
+parsed_length.to_hours(max_precision = 5)
 # >>> 0.09444
-parsed_lenth.strict
+parsed_length.strict
 # >>> False
-parsed_lenth.passed_value
+parsed_length.passed_value
 # >>> 5.5min, and 10 seconds
-parsed_lenth.parsed_value.valid
+parsed_length.parsed_value.valid
 # >>> [(5.5, 'minutes'), (10.0, 'seconds')]
-parsed_lenth.parsed_value.hours
+parsed_length.parsed_value.hours
 # >>> None
-parsed_lenth.parsed_value.minutes
+parsed_length.parsed_value.minutes
 # >>> 5.5
-parsed_lenth.parsed_value.seconds
+parsed_length.parsed_value.seconds
 # >>> 10
 
 time_string = "5 ish minutes and uhhh, 7 seconds?"
 
-parsed_lenth = TimeLength(time_string)
-parsed_lenth.to_seconds()
+parsed_length = TimeLength(time_string)
+parsed_length.to_seconds()
 # >>> 307.0
-parsed_lenth = TimeLength(time_string, strict = True)
+parsed_length = TimeLength(time_string, strict = True)
 # >>> InvalidValue: ... contains invalid values: ['ish', 'uhhh', '?']
 ```
 ```python
@@ -67,12 +67,14 @@ from timelength import TimeLength, Minute
 from copy import deepcopy
 
 time_string = "5.5MiNuTeS, and 10 seconds"
-minute = deepcopy(Minute())
-minute.terms.append("MiNuTeS")
+cust_min = deepcopy(Minute())
+cust_min.terms.append("MiNuTeS")
 
-parsed_lenth = TimeLength(time_string, custom_minute = minute)
-parsed_lenth.total_seconds
+parsed_length = TimeLength(time_string, custom_minute = cust_min)
+parsed_length.total_seconds
 # >>> 340.0
-parsed_lenth.passed_value
+parsed_length.passed_value
 # >>> 5.5MiNuTeS, and 10 seconds
+parsed_length.parsed_value.valid
+# >>> [(5.5, 'minutes'), (10.0, 'seconds')]
 ```
