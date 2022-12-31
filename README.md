@@ -73,6 +73,6 @@ minute.terms.append("MiNuTeS")
 parsed_lenth = TimeLength(time_string, custom_minute = minute)
 parsed_lenth.total_seconds
 # >>> 340.0
-parsed_lenth.total_seconds
+parsed_lenth.passed_value
 # >>> 5.5MiNuTeS, and 10 seconds
 ```
