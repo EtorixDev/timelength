@@ -6,7 +6,7 @@ A Python package to parse human readable lengths of time, including long form su
 ## Installation
 `timelength` can be installed via pip:
 ```bash
-$ pip install git+https://github.com/Etorix0005/timelength.git
+$ pip install timelength
 ```
 
 ## Usage
