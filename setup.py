@@ -1,13 +1,22 @@
-from timelength import __title__, __version__, __url__, __author__, __author_email__
 from setuptools import setup, find_packages
 
-setup(
-    name = __title__,
-    version = __version__,
+def readme():
+    with open("README.md") as f:
+        return f.read()
 
-    url = __url__,
-    author = __author__,
-    author_email = __author_email__,
+setup(
+    name = "timelength",
+    version = "1.0.1",
+    url = "https://github.com/Etorix0005/timelength",
+    license = "MIT License",
+    author = "etorix.dev",
+    author_email = "admin@etorix.dev",
+    description = "A Python package to parse human readable lengths of time.",
+    long_description_content_type = "text/markdown",
+    long_description = readme(),
+    classifiers=["License :: OSI Approved :: MIT License",
+                 "Programming Language :: Python :: 3",
+                 "Programming Language :: Python :: 3.10"],
 
     packages = find_packages()
 )
