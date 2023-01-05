@@ -53,7 +53,7 @@ class TimeLength(object):
     def __init__(self, passed_value, strict = False, custom_millisecond = Millisecond(), custom_second = Second(), 
         custom_minute = Minute(), custom_hour = Hour(), custom_day = Day(), custom_week = Week(), custom_month = Month(), 
         custom_year = Year(), custom_decade = Decade(), custom_century = Century()):
-        self.passed_value = passed_value
+        self.passed_value = str(passed_value) if passed_value else ""
         self.strict = strict
         self.Millisecond = custom_millisecond
         self.Second = custom_second
