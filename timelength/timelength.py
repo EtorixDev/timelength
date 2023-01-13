@@ -180,7 +180,7 @@ class TimeLength(object):
                     preceeding_alpha = True
             index += 1
             # Append pairs to valid_values to be returned
-            if input_length and input_scale:
+            if input_length is not None and input_scale is not None:
                 valid_values.append((input_length, input_scale))
                 input_length = None
                 input_scale = None

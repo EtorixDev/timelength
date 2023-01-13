@@ -6,7 +6,7 @@ def readme():
 
 setup(
     name = "timelength",
-    version = "1.1.4",
+    version = "1.1.5",
     url = "https://github.com/Etorix0005/timelength",
     license = "MIT License",
     author = "Etorix",
