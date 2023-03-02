@@ -144,7 +144,7 @@ class TimeLength(object):
 
         index = 0
         input_length = None
-        input_scale = None
+        input_scale = None if self.strict or len(potential_values) > 1 else "second"
         preceeding_num = False
         preceeding_alpha = True
         invalid_values = [item for item in potential_values if item and not isfloat(item) and item not in self.__abbreviations]
@@ -181,6 +181,8 @@ class TimeLength(object):
             index += 1
             # Append pairs to valid_values to be returned
             if input_length is not None and input_scale is not None:
+                if input_length != 1 and input_scale == "second":
+                    input_scale += "s"
                 valid_values.append((input_length, input_scale))
                 input_length = None
                 input_scale = None
