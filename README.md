@@ -1,80 +1,26 @@
 # timelength
-Inspired by [durations](https://github.com/oleiade/durations) by [oleiade](https://github.com/oleiade).
-
-A Python package to parse human readable lengths of time, including long form such as `1 day, 5 hours, and 30 seconds`, short form such as `1d5h30s`, and a mix thereof such as `1 day 5h 30s`. Includes default relaxed parsing and optional strict parsing. Supports custom abbreviations, scale factors, and more.
+A Python package to parse human readable lengths of time, including long form such as `1 day, 5 hours, and 30 seconds`, short form such as `1d5h30s`, a mix thereof such as `1 day 5h 30s`, and numerals such as `half a day` and `twelve hours`.
 
 ## Installation
 `timelength` can be installed via pip:
-```bash
-$ pip install timelength
+```
+pip install timelength
+```
+Or added to your project via poetry:
+```
+poetry add timelength
 ```
 
 ## Usage
-To parse a length of time, instantiate a TimeLength object with the string of text to parse. The text should include pairs of `Values` and `Scales`.
-* A `Value` is a number.
-* A `Scale` is a length of time from Milliseconds to Centuries, including short form and various other potential abbreviations associated with each scale.
-* Acceptable separators of multiple  `Values` and `Scales` are commas, the word "`and`", normal spaces, and tab characters.
+...
 
-### Scale Reference
-* Millisecond: `ms`, `millisecond`, `milliseconds`
-* Second: `s`, `second`, `seconds`
-* Minute:`m`, `minute`, `minutes`
-* Hour: `h`, `hour`, `hours`
-* Day: `d`, `day`, `days`
-* Week: `w`, `week`, `weeks`
-* Month: `M`, `month`, `months`
-* Year: `y`, `year`, `years`
-* Decade: `D`, `decade`, `decades`
-* Century: `c`, `century`, `centuries`
-* Various other abbreviations viewable with `timelength.Day().terms` etc
+## Usage Example (English)
+...
 
-### Usage Example
-```python
-from timelength import TimeLength
+## Customization
+...
 
-time_string = "5.5min, and 10 seconds"
-
-parsed_length = TimeLength(time_string)
-parsed_length.total_seconds
-# >>> 340.0
-parsed_length.to_hours()
-# >>> 0.09
-parsed_length.to_hours(max_precision = 5)
-# >>> 0.09444
-parsed_length.strict
-# >>> False
-parsed_length.passed_value
-# >>> 5.5min, and 10 seconds
-parsed_length.parsed_value.valid
-# >>> [(5.5, 'minutes'), (10.0, 'seconds')]
-parsed_length.parsed_value.hours
-# >>> None
-parsed_length.parsed_value.minutes
-# >>> 5.5
-parsed_length.parsed_value.seconds
-# >>> 10
-
-time_string = "5 ish minutes and uhhh, 7 seconds?"
-
-parsed_length = TimeLength(time_string)
-parsed_length.to_seconds()
-# >>> 307.0
-parsed_length = TimeLength(time_string, strict = True)
-# >>> InvalidValue: ... contains invalid values: ['ish', 'uhhh', '?']
-```
-```python
-from timelength import TimeLength, Minute
-from copy import deepcopy
-
-time_string = "5.5MiNuTeS, and 10 seconds"
-cust_min = deepcopy(Minute())
-cust_min.terms.append("MiNuTeS")
-
-parsed_length = TimeLength(time_string, custom_minute = cust_min)
-parsed_length.total_seconds
-# >>> 340.0
-parsed_length.passed_value
-# >>> 5.5MiNuTeS, and 10 seconds
-parsed_length.parsed_value.valid
-# >>> [(5.5, 'minutes'), (10.0, 'seconds')]
-```
+## Supported Locales
+1. English
+2. Custom (Copy & modify the English config with new terms as long as your Locale follows English grammar structure)
+3. Custom (Write your own parsing logic if your Locale's grammar structure differs too drastically)

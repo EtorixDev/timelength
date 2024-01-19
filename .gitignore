@@ -1,0 +1,10 @@
+.env
+.venv/
+*.sh
+__pycache__/
+*.pyc
+*.pyo
+.vscode/
+.ruff_cache
+.pytest_cache
+dist

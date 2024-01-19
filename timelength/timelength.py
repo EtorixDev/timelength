@@ -1,223 +1,177 @@
-from timelength.exceptions import *
-from timelength.constants import *
-from timelength.helper import *
-from timelength.scales import *
+from timelength.dataclasses import ParsedTimeLength
+from timelength.errors import DisabledScale
+from timelength.locales import English, Locale
 
-class ParsedValues(object):
-    def __init__(self, valid_values: list):
-        self.valid = valid_values
-        self.milliseconds = None
-        self.seconds = None
-        self.minutes = None
-        self.hours = None
-        self.days = None
-        self.weeks = None
-        self.months = None
-        self.years = None
-        self.decades = None
-        self.centuries = None
-        for length in valid_values:
-            if length[1] in Millisecond().terms: 
-                self.milliseconds = length[0]
-            if length[1] in Second().terms: 
-                self.seconds = length[0]
-            if length[1] in Minute().terms: 
-                self.minutes = length[0]
-            if length[1] in Hour().terms: 
-                self.hours = length[0]
-            if length[1] in Day().terms: 
-                self.days = length[0]
-            if length[1] in Week().terms: 
-                self.weeks = length[0]
-            if length[1] in Month().terms: 
-                self.months = length[0]
-            if length[1] in Year().terms: 
-                self.years = length[0]
-            if length[1] in Decade().terms: 
-                self.decades = length[0]
-            if length[1] in Century().terms: 
-                self.centuries = length[0]
 
-    def __str__(self):
-        return f"<ParsedValues {self.__dict__}>"
+class TimeLength:
+    """A length of time.
 
-    def __repr__(self):
-        return self.__str__()
+    Represents a length of time provided in a human readable format.
 
-class ParsedTimeLength(object):
-    def __init__(self, total_seconds, valid_values):
-        self.total_seconds = total_seconds
-        self.valid_values = valid_values
+    ### Attributes
 
-class TimeLength(object):
-    def __init__(self, passed_value, strict = False, custom_millisecond = Millisecond(), custom_second = Second(), 
-        custom_minute = Minute(), custom_hour = Hour(), custom_day = Day(), custom_week = Week(), custom_month = Month(), 
-        custom_year = Year(), custom_decade = Decade(), custom_century = Century()):
-        self.passed_value = str(passed_value) if passed_value else ""
+    - `content` (`str`): The string content representing the length of time.
+    - `strict` (`bool`): Determines the strictness of the parsing process. If `True`,
+        only strictly formatted time strings are accepted with invalid inputs causing errors. 
+        Strictness is somewhat arbitrary and based on decisions made about expectations from the 
+        specified Locale, and as such may vary in its behavior between Locales. Defaults to `False`.
+        If a middleground is desired, it is recommended to set `strict` to `False` and to manually
+        check `TimeLength.result.invalid` after parsing.
+    - `locale` (`Locale`): The locale context used for parsing the time string. Defaults to English.
+    - `result` (`ParsedTimeLength`): The result of the parsing.
+
+    ### Methods
+
+    - `parse()`: Parses the `content` attribute based on the specified strictness and locale.
+        Automatically called during initialization. Manually call this method again if changes
+        are made to strictness or locale.
+    - Conversion methods (`to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`,
+        `to_weeks`, `to_months`, `to_years`, `to_decades`, `to_centuries`) return the total duration
+        in their respective units with the specified precision.
+
+    ### Example
+
+    ```python
+    time_length = TimeLength("2 hours 30 minutes")
+    if time_length.success:
+        print(f"Total seconds: {time_length.total_seconds}")
+    ```
+    """
+
+    def __init__(
+        self, content: str = "", strict: bool = False, locale: Locale = English()
+    ) -> None:
+        """Initialize the `TimeLength` based on passed settings and call the `parse` method."""
+        self.content = content
         self.strict = strict
-        self.Millisecond = custom_millisecond
-        self.Second = custom_second
-        self.Minute = custom_minute
-        self.Hour = custom_hour
-        self.Day = custom_day
-        self.Week = custom_week
-        self.Month = custom_month
-        self.Year = custom_year
-        self.Decade = custom_decade
-        self.Century = custom_century
-        self.__scales = [self.Millisecond, self.Second, self.Minute, self.Hour, self.Day, self.Week, self.Month, self.Year, self.Decade, self.Century]
-        self.__abbreviations = [term for sublist in self.__scales for term in sublist.terms]
-        
-        self.__parsed_time_length = self.__parse(self.passed_value, self.strict)
-        self.__valid_values = self.__parsed_time_length.valid_values
-        self.total_seconds = self.__parsed_time_length.total_seconds
-        self.parsed_value = ParsedValues(self.__valid_values)
+        self.locale = locale
+        self.result = ParsedTimeLength()
+        self._init_parse = True
+        self.parse()
 
-    def __str__(self):
-        return f"<TimeLength \"{self.passed_value}\">"
+    def __str__(self) -> str:
+        return f"<TimeLength \"{self.content[:50] + '...' if len(self.content) > 50 else self.content}\">"
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __parse(self, passed_value, strict):
-        buffer = ""
-        potential_values = []
-        valid_values = []
-        skip_iteration = 0
-        total_seconds = 0
-        last_alphanum = None
-
-        for index, char in enumerate(passed_value):
-            # Skip iterations due to decimal or non-alphanumeric encounter
-            if skip_iteration > 0:
-                skip_iteration -= 1
-                continue
-
-            # Check if decimal number is encountered
-            if (index + 2) < len(passed_value) and passed_value[index + 1] == "." and passed_value[index + 2].isdigit():
-                if isfloat(char):
-                    char += "."
-                else:
-                    char = "0."
-                future_index = index + 2
-                skip_iteration = 1
-                while future_index < len(passed_value) and passed_value[future_index].isdigit():
-                    char += passed_value[future_index]
-                    future_index += 1
-                    skip_iteration += 1
-            
-            # Catch special characters such as !#$+
-            alphanum = check_alphanumeric(char)
-            if char in SEPERATORS:
-                if buffer and not buffer.strip() in CONNECTORS:
-                    potential_values.append(buffer)
-                buffer = ""
-                last_alphanum = None
-            elif not alphanum and (index + 1) < len(passed_value):
-                if buffer:
-                    potential_values.append(buffer)
-                buffer = ""
-                index += 1
-                skip_iteration = 0
-                to_check = passed_value[index]
-                # Check if subsequent characters are also non-alphanumeric
-                while index < len(passed_value) and to_check is not None and to_check not in SEPERATORS and not isfloat(to_check) and not check_alphanumeric(to_check):
-                    char += passed_value[index]
-                    skip_iteration += 1
-                    index += 1
-                    if index < len(passed_value):
-                        to_check = passed_value[index]
-                potential_values.append(char)
-            # Only happens if the passed value ends in a single non-alphanumeric value
-            elif not alphanum:
-                if buffer:
-                    potential_values.append(buffer)
-                buffer = char
+    def parse(self) -> None:
+        """Parse the passed content using the parser attached to the object's `Locale`."""
+        if (
+            hasattr(self.locale, "_parser")
+            and self.locale._parser
+            and callable(self.locale._parser)
+        ):
+            if not self._init_parse:
+                self.result = ParsedTimeLength()
             else:
-                if (alphanum and last_alphanum and alphanum != last_alphanum):
-                    potential_values.append(buffer)
-                    buffer = char
-                else:
-                    buffer += char
-                last_alphanum = alphanum
-        potential_values.append(buffer)
+                self._init_parse = False
+            self.locale._parser(self.content, self.strict, self.locale, self.result)
 
-        index = 0
-        input_length = None
-        input_scale = None 
-        preceeding_num = False
-        preceeding_alpha = True
-        if not self.strict and len(potential_values) == 1 and isfloat(potential_values[0]):
-            potential_values.append(f"second{'s' if potential_values[0] != 1 else ''}")
-        invalid_values = [item for item in potential_values if item and not isfloat(item) and item not in self.__abbreviations]
-        potential_values = [item for item in potential_values if item and item not in invalid_values]
-        # If invalid and strict, error
-        # If not strict, ignore invalid and proceed
-        if invalid_values and self.strict:
-            raise InvalidValue(f"Input TimeLength \"{passed_value}\" contains {'invalid values' if len(invalid_values) > 1 else 'an invalid value'}: {invalid_values}")
-        for item in potential_values:
-            if isfloat(item):
-                if preceeding_num is True and strict is True:
-                    raise InvalidOrder(f"Input TimeLength \"{passed_value}\" contains multiple subsequent Values with no paired Scales: {potential_values}")
-                input_length = float(item)
-                preceeding_alpha = False
-                preceeding_num = True
-            else:
-                if index == 0 and preceeding_alpha and strict is True:
-                    raise InvalidOrder(f"Input TimeLength \"{passed_value}\" starts with a Scale rather than a Value: {potential_values}")
-                elif preceeding_alpha is True and strict is True:
-                    raise InvalidOrder(f"Input TimeLength \"{passed_value}\" contains multiple subsequent Scales with no paired Values: {potential_values}")
-                if preceeding_num and item in self.__abbreviations:
-                    # Calculate proper Value THEN Scale pairs
-                    input_scale = item
-                    for scale in self.__scales:
-                        if input_scale in scale.terms:
-                            total_seconds += input_length * scale.scale
-                            if input_length == 1:
-                                input_scale = scale.singular
-                            else:
-                                input_scale = scale.plural
-                            break
-                    preceeding_num = False
-                    preceeding_alpha = True
-            index += 1
-            # Append pairs to valid_values to be returned
-            if input_length is not None and input_scale is not None:
-                valid_values.append((input_length, input_scale))
-                input_length = None
-                input_scale = None
+    def to_milliseconds(self, max_precision=2) -> int:
+        '''Convert the total seconds to milliseconds.
         
-        if not valid_values and self.strict:
-            raise InvalidValue(f"Input TimeLength \"{passed_value}\" contains no valid Value and Scale pairs.")
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(
+            self.result.seconds, self.locale._millisecond.scale, max_precision
+        )
 
-        return ParsedTimeLength(total_seconds, valid_values)
+    def to_seconds(self, max_precision=2) -> int:
+        '''Convert the total seconds to seconds. Only useful if the seconds `Scale` has been modified.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(
+            self.result.seconds, self.locale._second.scale, max_precision
+        )
 
-    def to_milliseconds(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Millisecond.scale), max_precision)
+    def to_minutes(self, max_precision=2) -> int:
+        '''Convert the total seconds to minutes.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(
+            self.result.seconds, self.locale._minute.scale, max_precision
+        )
 
-    def to_seconds(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Second.scale), max_precision)
+    def to_hours(self, max_precision=2) -> int:
+        '''Convert the total seconds to hours.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(self.result.seconds, self.locale._hour.scale, max_precision)
 
-    def to_minutes(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Minute.scale), max_precision)
+    def to_days(self, max_precision=2) -> int:
+        '''Convert the total seconds to days.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(self.result.seconds, self.locale._day.scale, max_precision)
 
-    def to_hours(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Hour.scale), max_precision)
+    def to_weeks(self, max_precision=2) -> int:
+        '''Convert the total seconds to weeks.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(self.result.seconds, self.locale._week.scale, max_precision)
 
-    def to_days(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Day.scale), max_precision)
+    def to_months(self, max_precision=2) -> int:
+        '''Convert the total seconds to months.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(self.result.seconds, self.locale._month.scale, max_precision)
 
-    def to_weeks(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Week.scale), max_precision)
+    def to_years(self, max_precision=2) -> int:
+        '''Convert the total seconds to years.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(self.result.seconds, self.locale._year.scale, max_precision)
 
-    def to_months(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Month.scale), max_precision)
+    def to_decades(self, max_precision=2) -> int:
+        '''Convert the total seconds to decades.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(
+            self.result.seconds, self.locale._decade.scale, max_precision
+        )
 
-    def to_years(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Year.scale), max_precision)
+    def to_centuries(self, max_precision=2) -> int:
+        '''Convert the total seconds to centuries.
+        
+        ### Args
+        - `max_precision` (`int`): The maximum number of decimal places to show. The rest are 
+        dropped during rounding. Defaults to `2`.
+        '''
+        return self._round(
+            self.result.seconds, self.locale._century.scale, max_precision
+        )
 
-    def to_decades(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Decade.scale), max_precision)
-
-    def to_centuries(self, max_precision = 2):
-        return round(self.total_seconds / float(self.Century.scale), max_precision)
+    def _round(self, total_seconds: float, scale: float, max_precision: int) -> int:
+        try:
+            return round(total_seconds / scale, max_precision)
+        except ZeroDivisionError as e:
+            raise DisabledScale(
+                "That Scale has been disabled by being removed from the config."
+            ) from e

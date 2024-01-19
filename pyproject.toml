@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "timelength"
+version = "2.0.0-dev"
+description = "A Python package to parse human readable lengths of time."
+authors = ["Etorix <admin@etorix.dev>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://pypi.org/project/timelength/"
+repository = "https://github.com/EtorixDev/timelength/"
+keywords = ["timelength", "duration", "python"]
+classifiers = [
+    "0License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+include = ["timelength/locales/*.json"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.1.9"
+pytest = "^7.4.4"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
