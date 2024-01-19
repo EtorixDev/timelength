@@ -503,12 +503,7 @@ def parser_one(
         if not segment_value:
             segment_value = 0
         if not strict:
-            result.valid.append(
-                (
-                    parsed_value + segment_value,
-                    locale._second
-                )
-            )
+            result.valid.append((parsed_value + segment_value, locale._second))
             result.seconds += parsed_value + segment_value
         else:
             result.invalid.append(

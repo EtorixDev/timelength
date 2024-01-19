@@ -22,5 +22,5 @@ poetry add timelength
 
 ## Supported Locales
 1. English
-2. Custom (Copy & modify the English config with new terms as long as your Locale follows English grammar structure)
+2. Custom (Copy & modify an existing config with new terms as long as your new Locale follows the existing config parser's grammar structure)
 3. Custom (Write your own parsing logic if your Locale's grammar structure differs too drastically)
