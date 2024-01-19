@@ -108,7 +108,7 @@ class TimeLength(object):
             
             # Catch special characters such as !#$+
             alphanum = check_alphanumeric(char)
-            if char in SEPERATORS:
+            if char in SEPARATORS:
                 if buffer and not buffer.strip() in CONNECTORS:
                     potential_values.append(buffer)
                 buffer = ""
@@ -121,7 +121,7 @@ class TimeLength(object):
                 skip_iteration = 0
                 to_check = passed_value[index]
                 # Check if subsequent characters are also non-alphanumeric
-                while index < len(passed_value) and to_check is not None and to_check not in SEPERATORS and not isfloat(to_check) and not check_alphanumeric(to_check):
+                while index < len(passed_value) and to_check is not None and to_check not in SEPARATORS and not isfloat(to_check) and not check_alphanumeric(to_check):
                     char += passed_value[index]
                     skip_iteration += 1
                     index += 1
