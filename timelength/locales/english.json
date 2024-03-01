@@ -1,7 +1,7 @@
 {
     "connectors": [" ", "\t", "-"],
     "segmentors": [",", "and", "&"],
-    "strict_allowed": ["!", "?", "'", ".", ","],
+    "allowed_symbols": ["!", "?", "'", ".", ","],
     "decimal_separators": ["."],
     "thousand_separators": [",", " "],
     "parser_file": "parser_one.py",

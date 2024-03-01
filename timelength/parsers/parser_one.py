@@ -43,7 +43,7 @@ def parser_one(
                     if "terms" in numerals[numeral]
                     for term in numerals[numeral]["terms"]
                 ],
-                locale._connectors + locale._segmentors + locale._strict_allowed,
+                locale._connectors + locale._segmentors + locale._allowed_symbols,
             )
             buffer_values.append(
                 (
@@ -199,7 +199,7 @@ def parser_one(
             and char
             not in locale._connectors
             + locale._segmentors
-            + locale._strict_allowed
+            + locale._allowed_symbols
             + locale._decimal_separators
             + locale._thousand_separators
         ):

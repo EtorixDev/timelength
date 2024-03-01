@@ -17,19 +17,19 @@ class TimeLength:
         specified Locale, and as such may vary in its behavior between Locales. Defaults to `False`.
         If a middleground is desired, it is recommended to set `strict` to `False` and to manually
         check `TimeLength.result.invalid` after parsing.
-    - `locale` (`Locale`): The locale context used for parsing the time string. Defaults to English.
+    - `locale` (`Locale`): The locale context used for parsing the time string. Defaults to `English`.
     - `result` (`ParsedTimeLength`): The result of the parsing.
 
     ### Methods
 
     - `parse`: Parse the `content` attribute based on the `strict` and `locale` attributes.
         Automatically called during initialization. Manually call this method again if changes
-        are made to strictness or locale.
+        are made to `strict` or `locale`.
     - `to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`, `to_weeks`, `to_months`, 
         `to_years`, `to_decades`, `to_centuries`: Convert the total duration to the respective
         units of each method with specified precision.
     - `__str__`: Return the parsed lengths of time.
-    - `__repr__`: Return a string representation of the TimeLength with attributes included.
+    - `__repr__`: Return a string representation of the `TimeLength` with attributes included.
 
     ### Example
 
@@ -52,11 +52,11 @@ class TimeLength:
         self.parse()
 
     def __str__(self) -> str:
-        '''Return the valid parsed lengths of time.'''
+        """Return the valid parsed lengths of time."""
         return self.result.valid
 
     def __repr__(self) -> str:
-        '''Return a string representation of the TimeLength with attributes included.'''
+        """Return a string representation of the `TimeLength` with attributes included."""
         return f"TimeLength(\"{self.content}\", {self.strict}, {self.locale})"
 
     def parse(self) -> None:
@@ -207,7 +207,7 @@ class TimeLength:
         )
 
     def _round(self, total_seconds: float, scale: float, max_precision: int) -> typing.Union[int, float]:
-        '''Round the conversion methods while checking for disabled `Scale`s.'''
+        """Round the conversion methods while checking for disabled `Scale`s."""
         try:
             return round(total_seconds / scale, max_precision)
         except ZeroDivisionError as e:

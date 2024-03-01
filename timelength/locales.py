@@ -9,7 +9,16 @@ from timelength.dataclasses import Scale
 
 
 class Locale:
+    """
+    Represents a default Locale, each of which may handle parsing differently.
+
+    ### Attributes
+
+    - `json_location` (`str`): The string path to the config file for this Locale.
+    """
     def __init__(self, json_location: str = "locales/english.json"):
+        """Initialize the `Locale` based on the passed config file."""
+        self._json_location = json_location
         self._config = {}
         base_dir = os.path.dirname(__file__)
 
@@ -36,8 +45,8 @@ class Locale:
                 "Connectors and Segmentors may not have overlap in config."
             )
 
-        # _strict_allowed allows for certain characters to appear ONCE in a row in the input while strict is enabled.
-        self._strict_allowed = self._get_config_or_raise("strict_allowed")
+        # _allowed_symbols may appear ONCE in a row in the input while strict is enabled.
+        self._allowed_symbols = self._get_config_or_raise("allowed_symbols")
         self._decimal_separators = self._get_config_or_raise("decimal_separators")
         self._thousand_separators = self._get_config_or_raise("thousand_separators")
         if set(self._decimal_separators).intersection(self._thousand_separators):
@@ -47,7 +56,7 @@ class Locale:
 
         # Default Scales can be disabled by removing them from the config. In their place an empty Scale of
         # scale 0 will be added. This will cause its related TimeLength conversion method, such as `to_minutes`,
-        # to error as dividing by 0 is not allowed. Parsing wise it will be ignored as the terms list is empty.
+        # to error as dividing by 0 is not allowed. Parsing wise, it will be ignored as the terms list is empty.
         scales_json = self._get_config_or_raise("scales")
         self._millisecond = (
             Scale(**self._config["scales"]["millisecond"])
@@ -132,9 +141,7 @@ class Locale:
         self._extra_data = self._get_config_or_raise("extra_data")
 
     def _get_scale(self, text: str) -> Scale:
-        """
-        Get the scale that contains a specific value in its terms list.
-        """
+        """Get the scale that contains a specific value in its terms list."""
         for scale in self._scales:
             scale: Scale
             if text in scale.terms:
@@ -142,9 +149,7 @@ class Locale:
         return None
 
     def _get_numeral(self, text: str) -> dict:
-        """
-        Get a numeral that contains a specific value in its terms list.
-        """
+        """Get a numeral that contains a specific value in its terms list."""
         numeral = {}
         for numeral in self._numerals:
             if text in self._numerals[numeral]["terms"]:
@@ -152,6 +157,7 @@ class Locale:
         return None
 
     def _load_parser(self, base_dir):
+        """Load the parser file linked in the config file into a method attached to the `Locale`."""
         if (
             self._parser
             and callable(self._parser)
@@ -181,10 +187,12 @@ class Locale:
             raise LocaleConfigError("No parser path provided in config.")
 
     def _load_config(self, file: str):
+        """Load the config from the provided path."""
         with open(file, "r") as f:
             self._config = json.load(f)
 
     def _get_config_or_raise(self, key: str) -> Union[str, float, list, dict]:
+        """Retrieve a value from the config or raise if the value is not found."""
         value = self._config.get(key)
         if value is None:
             raise LocaleConfigError(
@@ -193,17 +201,29 @@ class Locale:
         return value
 
     def __str__(self):
+        """Return the name of the `Locale`."""
         return f"<{self.__class__.__name__}>"
 
     def __repr__(self):
-        return self.__str__()
+        """Return a string representation of the `Locale` with the config path included."""
+        return f"Locale(\"{self._json_location}\")"
 
 
 class CustomLocale(Locale):
+    """
+    Represents a custom `Locale`.
+
+    ### Attributes
+
+    - `json_location` (`str`): The string path to the config file for this `Locale`.
+    """
     def __init__(self, path_to_json: str):
         super().__init__(path_to_json)
 
 
 class English(Locale):
+    """
+    Represents the `English` `Locale`.
+    """
     def __init__(self):
         super().__init__("locales/english.json")
