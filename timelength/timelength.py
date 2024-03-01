@@ -5,8 +5,7 @@ from timelength.locales import English, Locale
 
 
 class TimeLength:
-    """A length of time.
-
+    """
     Represents a length of time provided in a human readable format.
 
     ### Attributes
@@ -23,12 +22,14 @@ class TimeLength:
 
     ### Methods
 
-    - `parse()`: Parses the `content` attribute based on the specified strictness and locale.
+    - `parse`: Parse the `content` attribute based on the `strict` and `locale` attributes.
         Automatically called during initialization. Manually call this method again if changes
         are made to strictness or locale.
-    - Conversion methods (`to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`,
-        `to_weeks`, `to_months`, `to_years`, `to_decades`, `to_centuries`) return the total duration
-        in their respective units with the specified precision.
+    - `to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`, `to_weeks`, `to_months`, 
+        `to_years`, `to_decades`, `to_centuries`: Convert the total duration to the respective
+        units of each method with specified precision.
+    - `__str__`: Return the parsed lengths of time.
+    - `__repr__`: Return a string representation of the TimeLength with attributes included.
 
     ### Example
 
@@ -51,10 +52,12 @@ class TimeLength:
         self.parse()
 
     def __str__(self) -> str:
-        return f"<TimeLength \"{self.content[:50] + '...' if len(self.content) > 50 else self.content}\">"
+        '''Return the valid parsed lengths of time.'''
+        return self.result.valid
 
     def __repr__(self) -> str:
-        return self.__str__()
+        '''Return a string representation of the TimeLength with attributes included.'''
+        return f"TimeLength(\"{self.content}\", {self.strict}, {self.locale})"
 
     def parse(self) -> None:
         """Parse the passed content using the parser attached to the `TimeLength`'s `Locale`."""
@@ -88,7 +91,7 @@ class TimeLength:
         )
 
     def to_seconds(self, max_precision=2) -> typing.Union[int, float]:
-        """Convert the total seconds to seconds. Only useful if the seconds `Scale` has been modified.
+        """Convert the total seconds to seconds.
         
         ### Args:
         - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
@@ -204,6 +207,7 @@ class TimeLength:
         )
 
     def _round(self, total_seconds: float, scale: float, max_precision: int) -> typing.Union[int, float]:
+        '''Round the conversion methods while checking for disabled `Scale`s.'''
         try:
             return round(total_seconds / scale, max_precision)
         except ZeroDivisionError as e:
