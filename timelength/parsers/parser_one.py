@@ -23,7 +23,7 @@ def parser_one(
     content = remove_diacritics(content)
     buffer = ""
     buffer_values = []
-    valid_values = []
+    result.valid = []
     skip_iteration = 0
     result.seconds = 0
     last_alphanum = None
@@ -214,21 +214,19 @@ def parser_one(
     if buffer:
         save_buffer()
 
-    invalid_values = [
+    result.invalid = [
         (item[0], "UNKNOWN_TERM")
         for item in buffer_values
         if item and item[1] == BufferType.UNKNOWN
     ]
-    result.invalid = invalid_values
-    result.valid = valid_values
     potential_values = [
         item
         for item in buffer_values
-        if (item[0], "UNKNOWN_TERM") not in invalid_values
+        if (item[0], "UNKNOWN_TERM") not in result.invalid
     ]
-    if invalid_values and strict:
+    if result.invalid and strict:
         raise InvalidValue(
-            f"Input TimeLength contains {'invalid values' if len(invalid_values) > 1 else 'an invalid value'}."
+            f"Input TimeLength contains {'invalid values' if len(result.invalid) > 1 else 'an invalid value'}."
         )
     parsed_value = None
     segment_value = None
@@ -503,8 +501,9 @@ def parser_one(
         if not segment_value:
             segment_value = 0
         if not strict:
-            result.valid.append((parsed_value + segment_value, locale._second))
-            result.seconds += parsed_value + segment_value
+            if len(potential_values) == 1:
+                result.valid.append((parsed_value + segment_value, locale._second))
+                result.seconds += parsed_value + segment_value
         else:
             result.invalid.append(
                 (
@@ -520,7 +519,7 @@ def parser_one(
                 "Input TimeLength contains a Value with no paired Scale."
             )
 
-    if not valid_values and strict:
+    if not result.valid and strict:
         raise NoValidValue("Input TimeLength contains no valid Value and Scale pairs.")
 
-    result.success = True if valid_values else False
+    result.success = True if result.valid else False

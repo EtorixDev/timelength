@@ -42,6 +42,7 @@ def generate_notstrict_tests():
     )
     cases.append(("0", True, 0, [], [(0, Scale(scale=1))]))
     cases.append(("5 seconds", True, 5, [], [(5, Scale(scale=1))]))
+    cases.append(("5 seconds 3", True, 5, [], [(5, Scale(scale=1))]))
     for decimal in English()._decimal_separators:
         cases.append((f"5{decimal}5 seconds", True, 5.5, [], [(5.5, Scale(scale=1))]))
     for thousand in English()._thousand_separators:
@@ -226,6 +227,7 @@ def generate_strict_tests():
     )
     cases.append(("0", False, 0, [(0, "LONELY_VALUE")], [], InvalidValue))
     cases.append(("5 seconds", True, 5, [], [(5, Scale(scale=1))], None))
+    cases.append(("5 seconds 3", False, 5, [(3, "LONELY_VALUE")], [(5, Scale(scale=1))], InvalidValue))
     for item in English()._decimal_separators:
         cases.append((f"5{item}5 seconds", True, 5.5, [], [(5.5, Scale(scale=1))], None))
     for item in English()._thousand_separators:
