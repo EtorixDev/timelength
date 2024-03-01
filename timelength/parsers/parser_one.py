@@ -47,7 +47,7 @@ def parser_one(
             )
             buffer_values.append(
                 (
-                    float(buffer) if buffer_alphanum == BufferType.FLOAT else buffer,
+                    float(buffer) if buffer_alphanum == BufferType.NUMBER else buffer,
                     buffer_alphanum,
                 )
             )
@@ -62,7 +62,7 @@ def parser_one(
         skip_thousand = 0
         already_used_decimal = False
 
-        if target_chartype == CharacterType.FLOAT:
+        if target_chartype == CharacterType.NUMBER:
             while next_index < len(content) and (
                 character_type(content[next_index]) == target_chartype
                 or content[next_index]
@@ -72,7 +72,7 @@ def parser_one(
                     skip_thousand -= 1
                     continue
 
-                if character_type(content[next_index]) == CharacterType.FLOAT:
+                if character_type(content[next_index]) == CharacterType.NUMBER:
                     buffer += content[next_index]
                 elif content[next_index] in locale._decimal_separators:
                     if already_used_decimal:
@@ -102,30 +102,30 @@ def parser_one(
                         next_index + 3 < len(content)
                         and all(
                             character_type(content[next_index + i])
-                            == CharacterType.FLOAT
+                            == CharacterType.NUMBER
                             for i in range(1, 4)
                         )
                     ):
                         if (
                             next_index + 2 < len(content)
                             and character_type(content[next_index + 1])
-                            == CharacterType.FLOAT
+                            == CharacterType.NUMBER
                             and content[next_index + 2] in locale._connectors
                         ):
                             pass
                         elif (
                             next_index + 3 < len(content)
                             and character_type(content[next_index + 1])
-                            == CharacterType.FLOAT
+                            == CharacterType.NUMBER
                             and character_type(content[next_index + 2])
-                            == CharacterType.FLOAT
+                            == CharacterType.NUMBER
                             and content[next_index + 3] in locale._connectors
                         ):
                             pass
                         elif (
                             next_index + 1 < len(content)
                             and character_type(content[next_index + 1])
-                            == CharacterType.FLOAT
+                            == CharacterType.NUMBER
                         ):
                             if strict:
                                 result.invalid.append(
@@ -169,16 +169,16 @@ def parser_one(
         if buffer and index and last_alphanum != current_alphanum:
             save_buffer()
 
-        if current_alphanum == CharacterType.FLOAT:
+        if current_alphanum == CharacterType.NUMBER:
             if (index + 2) < len(content) and (
-                character_type(content[index + 2]) == CharacterType.FLOAT
+                character_type(content[index + 2]) == CharacterType.NUMBER
             ):
                 if content[index + 1] in locale._decimal_separators:
                     buffer += char
-                    check_next(index + 1, CharacterType.FLOAT, True)
+                    check_next(index + 1, CharacterType.NUMBER, True)
                 elif content[index + 1] in locale._thousand_separators:
                     buffer += char
-                    check_next(index + 1, CharacterType.FLOAT)
+                    check_next(index + 1, CharacterType.NUMBER)
                 else:
                     buffer += char
             else:
@@ -187,10 +187,10 @@ def parser_one(
             not buffer
             and (index + 1) < len(content)
             and char in locale._decimal_separators
-            and (character_type(content[index + 1]) == CharacterType.FLOAT)
+            and (character_type(content[index + 1]) == CharacterType.NUMBER)
         ):
             buffer += "0."
-            check_next(index + 1, CharacterType.FLOAT, True)
+            check_next(index + 1, CharacterType.NUMBER, True)
         elif current_alphanum == CharacterType.ALPHABET:
             buffer += char
             check_next(index + 1, CharacterType.ALPHABET)
@@ -262,34 +262,34 @@ def parser_one(
         if (
             previous_modifier
             and index + 2 < len(potential_values)
-            and potential_values[index + 2][1] in [BufferType.FLOAT, BufferType.NUMERAL]
+            and potential_values[index + 2][1] in [BufferType.NUMBER, BufferType.NUMERAL]
         ):
             if potential_values[index + 2][1] == BufferType.NUMERAL:
                 numeral = locale._get_numeral(potential_values[index + 2][0])
                 potential_values[index + 2] = (
                     numeral["value"] * parsed_value,
-                    BufferType.FLOAT,
+                    BufferType.NUMBER,
                 )
             else:
                 potential_values[index + 2] = (
                     potential_values[index + 2][0] * parsed_value,
-                    BufferType.FLOAT,
+                    BufferType.NUMBER,
                 )
         if (
             next_modifier
             and index - 2 >= 0
-            and potential_values[index - 2][1] in [BufferType.FLOAT, BufferType.NUMERAL]
+            and potential_values[index - 2][1] in [BufferType.NUMBER, BufferType.NUMERAL]
         ):
             if potential_values[index - 2][1] == BufferType.NUMERAL:
                 numeral = locale._get_numeral(potential_values[index + 2][0])
                 potential_values[index - 2] = (
                     numeral["value"] * parsed_value,
-                    BufferType.FLOAT,
+                    BufferType.NUMBER,
                 )
             else:
                 potential_values[index - 2] = (
                     potential_values[index - 2][0] * parsed_value,
-                    BufferType.FLOAT,
+                    BufferType.NUMBER,
                 )
         elif not previous_modifier and not next_modifier and strict:
             result.invalid.append((text, "MISPLACED_MODIFIER_MULTIPLIER"))
@@ -312,7 +312,7 @@ def parser_one(
 
         if (
             strict
-            and previous_value_type_converted == BufferType.FLOAT
+            and previous_value_type_converted == BufferType.NUMBER
             and not starts_with_modifier
         ):
             result.invalid.append((number, "CONSECUTIVE_VALUES"))
@@ -335,7 +335,7 @@ def parser_one(
             else float(numeral["value"])
         )
         current_numeral_type = numeral["type"]
-        current_value_type_converted = BufferType.FLOAT
+        current_value_type_converted = BufferType.NUMBER
 
         if parsed_value is None:
             parsed_value = 0
@@ -343,7 +343,7 @@ def parser_one(
                 current_numeral_type == "modifiers"
                 and index + 2 < len(potential_values)
                 and potential_values[index + 2][1]
-                in [BufferType.FLOAT, BufferType.NUMERAL]
+                in [BufferType.NUMBER, BufferType.NUMERAL]
             ):
                 if potential_values[index + 2][1] == BufferType.NUMERAL:
                     numeral = locale._get_numeral(potential_values[index + 2][0])
@@ -352,12 +352,12 @@ def parser_one(
                     else:
                         potential_values[index + 2] = (
                             numeral["value"] * numeral_value,
-                            BufferType.FLOAT,
+                            BufferType.NUMBER,
                         )
                 else:
                     potential_values[index + 2] = (
                         potential_values[index + 2][0] * numeral_value,
-                        BufferType.FLOAT,
+                        BufferType.NUMBER,
                     )
                 starts_with_modifier = True
             else:
@@ -378,7 +378,7 @@ def parser_one(
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
             current_numeral_type = None
         elif (
-            previous_value_type_converted == BufferType.FLOAT
+            previous_value_type_converted == BufferType.NUMBER
             or previous_numeral_type == "modifiers"
         ) and current_numeral_type not in ["thousands", "modifiers"]:
             if strict:
@@ -450,7 +450,7 @@ def parser_one(
                 handle_special(current_value)
         elif current_value_type == BufferType.SPECIAL:
             handle_special(current_value)
-        elif current_value_type == BufferType.FLOAT:
+        elif current_value_type == BufferType.NUMBER:
             handle_float(current_value)
         elif current_value_type == BufferType.NUMERAL:
             handle_numeral(current_value, index)

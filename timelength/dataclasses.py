@@ -47,8 +47,8 @@ class Scale:
 
     ### Methods
 
-    - `__str__`: Return the singular form of the Scale.
-    - `__repr__`: Return a string representation of the Scale with attributes included.
+    - `__str__`: Returns the singular form of the Scale.
+    - `__repr__`: Returns a string representation of the Scale with attributes included.
     """
 
     scale: float = 0
