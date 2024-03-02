@@ -11,12 +11,10 @@ class TimeLength:
     ### Attributes
 
     - `content` (`str`): The string content representing the length of time.
-    - `strict` (`bool`): Determines the strictness of the parsing process. If `True`,
-        only strictly formatted time strings are accepted with invalid inputs causing errors. 
-        Strictness is somewhat arbitrary and based on decisions made about expectations from the 
-        specified Locale, and as such may vary in its behavior between Locales. Defaults to `False`.
-        If a middleground is desired, it is recommended to set `strict` to `False` and to manually
-        check `TimeLength.result.invalid` after parsing.
+    - `strict` (`bool`): If `True`, then `result.success` will only return `True` if `result.valid` 
+        is populated and `result.invalid` is not populated during parsing. If `False` (Default), then 
+        `result.success` will return `True` as long as `result.valid` has at least one item regardless 
+        of the state of `result.invalid` at the end of the parsing.
     - `locale` (`Locale`): The locale context used for parsing the time string. Defaults to `English`.
     - `result` (`ParsedTimeLength`): The result of the parsing.
 
@@ -25,7 +23,7 @@ class TimeLength:
     - `parse`: Parse the `content` attribute based on the `strict` and `locale` attributes.
         Automatically called during initialization. Manually call this method again if changes
         are made to `strict` or `locale`.
-    - `to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`, `to_weeks`, `to_months`, 
+    - `to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`, `to_weeks`, `to_months`,
         `to_years`, `to_decades`, `to_centuries`: Convert the total duration to the respective
         units of each method with specified precision.
     - `__str__`: Return the parsed lengths of time.
@@ -57,7 +55,7 @@ class TimeLength:
 
     def __repr__(self) -> str:
         """Return a string representation of the `TimeLength` with attributes included."""
-        return f"TimeLength(\"{self.content}\", {self.strict}, {self.locale})"
+        return f'TimeLength("{self.content}", {self.strict}, {self.locale})'
 
     def parse(self) -> None:
         """Parse the passed content using the parser attached to the `TimeLength`'s `Locale`."""
@@ -78,11 +76,11 @@ class TimeLength:
 
     def to_milliseconds(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to milliseconds.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
         dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -92,11 +90,11 @@ class TimeLength:
 
     def to_seconds(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to seconds.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -106,11 +104,11 @@ class TimeLength:
 
     def to_minutes(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to minutes.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -120,11 +118,11 @@ class TimeLength:
 
     def to_hours(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to hours.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -132,11 +130,11 @@ class TimeLength:
 
     def to_days(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to days.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -144,11 +142,11 @@ class TimeLength:
 
     def to_weeks(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to weeks.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -156,11 +154,11 @@ class TimeLength:
 
     def to_months(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to months.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -168,11 +166,11 @@ class TimeLength:
 
     def to_years(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to years.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -180,11 +178,11 @@ class TimeLength:
 
     def to_decades(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to decades.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
             dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -194,11 +192,11 @@ class TimeLength:
 
     def to_centuries(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to centuries.
-        
+
         ### Args:
-        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are 
+        - `max_precision` (`Union[int, float]`): The maximum number of decimal places to show. The rest are
         dropped during rounding. Defaults to `2`.
-        
+
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
@@ -206,7 +204,9 @@ class TimeLength:
             self.result.seconds, self.locale._century.scale, max_precision
         )
 
-    def _round(self, total_seconds: float, scale: float, max_precision: int) -> typing.Union[int, float]:
+    def _round(
+        self, total_seconds: float, scale: float, max_precision: int
+    ) -> typing.Union[int, float]:
         """Round the conversion methods while checking for disabled `Scale`s."""
         try:
             return round(total_seconds / scale, max_precision)

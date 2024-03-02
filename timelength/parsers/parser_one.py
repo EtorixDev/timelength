@@ -2,14 +2,6 @@ from fractions import Fraction
 
 from timelength.dataclasses import ParsedTimeLength, Scale
 from timelength.enums import BufferType, CharacterType
-from timelength.errors import (
-    InvalidValue,
-    LeadingScale,
-    MultipleConsecutiveScales,
-    MultipleConsecutiveSpecials,
-    MultipleConsecutiveValues,
-    NoValidValue,
-)
 from timelength.locales import Locale
 from timelength.utils import buffer_type, character_type, remove_diacritics
 
@@ -25,7 +17,7 @@ def parser_one(
     buffer_values = []
     result.valid = []
     skip_iteration = 0
-    result.seconds = 0
+    result.seconds = 0.0
     last_alphanum = None
     current_alphanum = None
 
@@ -76,21 +68,16 @@ def parser_one(
                     buffer += content[next_index]
                 elif content[next_index] in locale._decimal_separators:
                     if already_used_decimal:
-                        if strict:
-                            result.invalid.append(
-                                (
-                                    f"{content[next_index - 3]}{content[next_index - 2]}{content[next_index - 1]}{content[next_index]}",
-                                    "MALFORMED_DECIMAL",
-                                )
+                        result.invalid.append(
+                            (
+                                f"{content[next_index - 3]}{content[next_index - 2]}{content[next_index - 1]}{content[next_index]}",
+                                "MALFORMED_DECIMAL",
                             )
-                            raise InvalidValue(
-                                "Input TimeLength contains a malformed decimal representation."
-                            )
-                        else:
-                            next_index += 1
-                            skip_iteration += 1
-                            buffer = ""
-                            break
+                        )
+                        next_index += 1
+                        skip_iteration += 1
+                        buffer = ""
+                        break
                     buffer += "."
                     decimal_only = True
                     already_used_decimal = True
@@ -127,20 +114,15 @@ def parser_one(
                             and character_type(content[next_index + 1])
                             == CharacterType.NUMBER
                         ):
-                            if strict:
-                                result.invalid.append(
-                                    (
-                                        f"{content[next_index - 1]}{content[next_index]}{content[next_index + 1]}",
-                                        "MALFORMED_THOUSANDS",
-                                    )
+                            result.invalid.append(
+                                (
+                                    f"{content[next_index - 1]}{content[next_index]}{content[next_index + 1]}",
+                                    "MALFORMED_THOUSANDS",
                                 )
-                                raise InvalidValue(
-                                    "Input TimeLength contains a malformed thousands representation."
-                                )
-                            else:
-                                next_index += 1
-                                skip_iteration += 1
-                                buffer = ""
+                            )
+                            next_index += 1
+                            skip_iteration += 1
+                            buffer = ""
                         break
                     else:
                         for num in range(1, 4):
@@ -224,10 +206,6 @@ def parser_one(
         for item in buffer_values
         if (item[0], "UNKNOWN_TERM") not in result.invalid
     ]
-    if result.invalid and strict:
-        raise InvalidValue(
-            f"Input TimeLength contains {'invalid values' if len(result.invalid) > 1 else 'an invalid value'}."
-        )
     parsed_value = None
     segment_value = None
     parsed_scale = None
@@ -243,65 +221,54 @@ def parser_one(
 
     def handle_multiplier(text: str, index: int):
         nonlocal parsed_value, segment_value
-        previous_modifier = False
-        next_modifier = False
-        if (index - 2) >= 0 and (index - 2) < len(potential_values):
-            previous_modifier = locale._get_numeral(potential_values[index - 2][0])
-            previous_modifier = (
-                True if previous_modifier["type"] == "modifiers" else False
+        valid_previous = False
+        valid_next = False
+        previous_value = 0.0
+        next_value = 0.0
+        if (index - 2) >= 0:
+            previous_type = potential_values[index - 2][1]
+            if previous_type == BufferType.NUMERAL:
+                valid_previous = True
+                previous_value = locale._get_numeral(potential_values[index - 2][0])[
+                    "value"
+                ]
+                if isinstance(previous_value, str):
+                    previous_value = float(Fraction(previous_value))
+            elif previous_type == BufferType.NUMBER:
+                valid_previous = True
+                previous_value = potential_values[index - 2][0]
+        if (index + 2) < len(potential_values):
+            next_type = potential_values[index + 2][1]
+            if next_type == BufferType.NUMERAL:
+                valid_next = True
+                next_value = locale._get_numeral(potential_values[index + 2][0])[
+                    "value"
+                ]
+                if isinstance(next_value, str):
+                    next_value = float(Fraction(next_value))
+            elif next_type == BufferType.NUMBER:
+                valid_next = True
+                next_value = potential_values[index + 2][0]
+        if valid_previous and valid_next:
+            print(previous_value)
+            print(next_value)
+            potential_values[index + 2] = (
+                previous_value * next_value,
+                BufferType.NUMBER,
             )
-        if (
-            not previous_modifier
-            and (index - 2) >= 0
-            and (index - 2) < len(potential_values)
-        ):
-            next_modifier = locale._get_numeral(potential_values[index + 2][0])
-            next_modifier = True if next_modifier["type"] == "modifiers" else False
-        if (
-            previous_modifier
-            and index + 2 < len(potential_values)
-            and potential_values[index + 2][1] in [BufferType.NUMBER, BufferType.NUMERAL]
-        ):
-            if potential_values[index + 2][1] == BufferType.NUMERAL:
-                numeral = locale._get_numeral(potential_values[index + 2][0])
-                potential_values[index + 2] = (
-                    numeral["value"] * parsed_value,
-                    BufferType.NUMBER,
-                )
-            else:
-                potential_values[index + 2] = (
-                    potential_values[index + 2][0] * parsed_value,
-                    BufferType.NUMBER,
-                )
-        if (
-            next_modifier
-            and index - 2 >= 0
-            and potential_values[index - 2][1] in [BufferType.NUMBER, BufferType.NUMERAL]
-        ):
-            if potential_values[index - 2][1] == BufferType.NUMERAL:
-                numeral = locale._get_numeral(potential_values[index + 2][0])
-                potential_values[index - 2] = (
-                    numeral["value"] * parsed_value,
-                    BufferType.NUMBER,
-                )
-            else:
-                potential_values[index - 2] = (
-                    potential_values[index - 2][0] * parsed_value,
-                    BufferType.NUMBER,
-                )
-        elif not previous_modifier and not next_modifier and strict:
-            result.invalid.append((text, "MISPLACED_MODIFIER_MULTIPLIER"))
-            raise InvalidValue("Input TimeLength contains a misplaced multiplier.")
         else:
+            if not valid_previous and not valid_next:
+                result.invalid.append((text, "MISPLACED_MULTIPLIER"))
+            elif (not valid_previous and valid_next) or (
+                valid_previous and not valid_next
+            ):
+                result.invalid.append((text, "UNUSED_MULTIPLIER"))
             segment_value = None
             parsed_value = None
 
     def handle_special(symbol: str):
-        if symbol in previous_specials and strict:
+        if symbol in previous_specials:
             result.invalid.append((symbol, "CONSECUTIVE_SPECIALS"))
-            raise MultipleConsecutiveSpecials(
-                "Input TimeLength contains consecutive identical special items."
-            )
         previous_specials.append(symbol)
 
     def handle_float(number: float):
@@ -309,14 +276,10 @@ def parser_one(
         current_numeral_type = None
 
         if (
-            strict
-            and previous_value_type_converted == BufferType.NUMBER
+            previous_value_type_converted == BufferType.NUMBER
             and not starts_with_modifier
         ):
-            result.invalid.append((number, "CONSECUTIVE_VALUES"))
-            raise MultipleConsecutiveValues(
-                "Input TimeLength contains consecutive Values with no paired Scales."
-            )
+            result.invalid.append((parsed_value, "CONSECUTIVE_VALUES"))
         parsed_value = number
 
     def handle_numeral(text: str, index: int):
@@ -336,7 +299,7 @@ def parser_one(
         current_value_type_converted = BufferType.NUMBER
 
         if parsed_value is None:
-            parsed_value = 0
+            parsed_value = 0.0
             if (
                 current_numeral_type == "modifiers"
                 and index + 2 < len(potential_values)
@@ -345,7 +308,7 @@ def parser_one(
             ):
                 if potential_values[index + 2][1] == BufferType.NUMERAL:
                     numeral = locale._get_numeral(potential_values[index + 2][0])
-                    if numeral["type"] == "modifier_multiplier":
+                    if numeral["type"] == "multiplier":
                         parsed_value = numeral_value
                     else:
                         potential_values[index + 2] = (
@@ -379,13 +342,8 @@ def parser_one(
             previous_value_type_converted == BufferType.NUMBER
             or previous_numeral_type == "modifiers"
         ) and current_numeral_type not in ["thousands", "modifiers"]:
-            if strict:
-                result.invalid.append((text, "CONSECUTIVE_VALUES"))
-                raise MultipleConsecutiveValues(
-                    "Input TimeLength contains consecutive Values with no paired Scales."
-                )
-            else:
-                parsed_value = numeral_value
+            result.invalid.append((parsed_value, "CONSECUTIVE_VALUES"))
+            parsed_value = numeral_value
         else:
             parsed_value = numeral_value
 
@@ -395,31 +353,19 @@ def parser_one(
 
         if index == 0:
             result.invalid.append((text, "LEADING_SCALE"))
-            if strict:
-                raise LeadingScale(
-                    "Input TimeLength starts with a Scale rather than a Value."
-                )
         elif previous_value_type == BufferType.SCALE:
             result.invalid.append((text, "CONSECUTIVE_SCALES"))
-            if strict:
-                raise MultipleConsecutiveScales(
-                    "Input TimeLength contains consecutive Scales with no paired Values."
-                )
         elif parsed_value is None and segment_value is None:
             result.invalid.append((text, "LONELY_SCALE"))
-            if strict:
-                raise InvalidValue(
-                    "Input TimeLength contains a Scale with no paired Value."
-                )
 
         if parsed_value is not None or segment_value is not None:
             scale: Scale
             scale = locale._get_scale(text)
             if scale:
                 if not parsed_value:
-                    parsed_value = 0
+                    parsed_value = 0.0
                 if not segment_value:
-                    segment_value = 0
+                    segment_value = 0.0
                 result.seconds += (parsed_value + segment_value) * scale.scale
                 parsed_scale = scale
 
@@ -428,21 +374,15 @@ def parser_one(
         current_value_type = element[1]
         current_value_type_converted = current_value_type
 
-        modifier_multiplier = False
+        multiplier = False
         if current_value_type == BufferType.NUMERAL:
-            modifier_multiplier = locale._get_numeral(current_value)
-            modifier_multiplier = (
-                True if modifier_multiplier["type"] == "modifier_multiplier" else False
-            )
-        if modifier_multiplier:
-            if parsed_value is None and strict:
-                result.invalid.append((current_value, "MISPLACED_MODIFIER_MULTIPLIER"))
-                raise InvalidValue(
-                    "Input TimeLength contains a misplaced modifier-multiplier."
-                )
-            elif parsed_value is not None:
+            multiplier = locale._get_numeral(current_value)
+            multiplier = True if multiplier["type"] == "multiplier" else False
+        if multiplier:
+            if parsed_value is not None:
                 handle_multiplier(current_value, index)
             else:
+                result.invalid.append((current_value, "MISPLACED_MULTIPLIER"))
                 segment_value = None
                 parsed_value = None
                 handle_special(current_value)
@@ -469,9 +409,9 @@ def parser_one(
 
         if (parsed_value is not None or segment_value is not None) and parsed_scale:
             if not parsed_value:
-                parsed_value = 0
+                parsed_value = 0.0
             if not segment_value:
-                segment_value = 0
+                segment_value = 0.0
             result.valid.append((parsed_value + segment_value, parsed_scale))
             parsed_value = None
             segment_value = None
@@ -479,47 +419,43 @@ def parser_one(
             starts_with_modifier = False
 
         if current_value in locale._segmentors:
-            if strict and current_value in previous_segmentors:
+            if current_value in previous_segmentors:
                 result.invalid.append((current_value, "CONSECUTIVE_SPECIALS"))
-                raise MultipleConsecutiveSpecials(
-                    "Input TimeLength contains consecutive identical special items."
-                )
-            else:
-                if parsed_value is not None:
-                    if not segment_value:
-                        segment_value = 0
-                    segment_value += parsed_value
-                parsed_value = None
-                starts_with_modifier = False
-                previous_segmentors.append(current_value)
+            if parsed_value is not None:
+                if not segment_value:
+                    segment_value = 0.0
+                segment_value += parsed_value
+            parsed_value = None
+            starts_with_modifier = False
+            previous_segmentors.append(current_value)
         else:
             previous_segmentors = []
 
     if (parsed_value is not None or segment_value is not None) and not parsed_scale:
         if not parsed_value:
-            parsed_value = 0
+            parsed_value = 0.0
         if not segment_value:
-            segment_value = 0
-        if not strict:
-            if len(potential_values) == 1:
-                result.valid.append((parsed_value + segment_value, locale._second))
-                result.seconds += parsed_value + segment_value
+            segment_value = 0.0
+        selected_value = (
+            parsed_value
+            if parsed_value is not None
+            else segment_value
+            if segment_value is not None
+            else ""
+        )
+        if not strict and len(potential_values) == 1:
+            result.valid.append((parsed_value + segment_value, locale._second))
+            result.seconds += parsed_value + segment_value
         else:
             result.invalid.append(
                 (
-                    parsed_value
-                    if parsed_value is not None
-                    else segment_value
-                    if segment_value is not None
-                    else "",
+                    selected_value,
                     "LONELY_VALUE",
                 )
             )
-            raise InvalidValue(
-                "Input TimeLength contains a Value with no paired Scale."
-            )
 
-    if not result.valid and strict:
-        raise NoValidValue("Input TimeLength contains no valid Value and Scale pairs.")
-
-    result.success = True if result.valid else False
+    if result.valid:
+        if strict and not result.invalid:
+            result.success = True
+        elif not strict:
+            result.success = True

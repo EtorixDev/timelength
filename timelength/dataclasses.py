@@ -20,7 +20,7 @@ class ParsedTimeLength:
     """
 
     success: bool = False
-    seconds: float = 0
+    seconds: float = 0.0
     invalid: list = field(default_factory=list)
     valid: list = field(default_factory=list)
 
@@ -51,7 +51,7 @@ class Scale:
     - `__repr__`: Returns a string representation of the Scale with attributes included.
     """
 
-    scale: float = 0
+    scale: float = 0.0
     singular: str = ""
     plural: str = ""
     terms: list = field(default_factory=list)
