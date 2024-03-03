@@ -11,9 +11,9 @@ class TimeLength:
     ### Attributes
 
     - `content` (`str`): The string content representing the length of time.
-    - `strict` (`bool`): If `True`, then `result.success` will only return `True` if `result.valid` 
-        is populated and `result.invalid` is not populated during parsing. If `False` (Default), then 
-        `result.success` will return `True` as long as `result.valid` has at least one item regardless 
+    - `strict` (`bool`): If `True`, then `result.success` will only return `True` if `result.valid`
+        is populated and `result.invalid` is not populated during parsing. If `False` (Default), then
+        `result.success` will return `True` as long as `result.valid` has at least one item regardless
         of the state of `result.invalid` at the end of the parsing.
     - `locale` (`Locale`): The locale context used for parsing the time string. Defaults to `English`.
     - `result` (`ParsedTimeLength`): The result of the parsing.

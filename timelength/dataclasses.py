@@ -62,4 +62,4 @@ class Scale:
 
     def __repr__(self):
         """Return a string representation of the Scale with attributes included."""
-        return f"Scale({self.scale}, \"{self.singular}\", \"{self.plural}\")"
+        return f'Scale({self.scale}, "{self.singular}", "{self.plural}")'

@@ -16,6 +16,7 @@ class Locale:
 
     - `json_location` (`str`): The string path to the config file for this Locale.
     """
+
     def __init__(self, json_location: str = "locales/english.json"):
         """Initialize the `Locale` based on the passed config file."""
         self._json_location = json_location
@@ -34,7 +35,9 @@ class Locale:
         if not self._config:
             raise LocaleConfigError("Provided config is empty.")
 
-        self._parser_path: str = os.path.join(base_dir, "parsers", self._get_config_or_raise("parser_file"))
+        self._parser_path: str = os.path.join(
+            base_dir, "parsers", self._get_config_or_raise("parser_file")
+        )
         self._parser = None
         self._load_parser(base_dir)
 
@@ -206,7 +209,7 @@ class Locale:
 
     def __repr__(self):
         """Return a string representation of the `Locale` with the config path included."""
-        return f"Locale(\"{self._json_location}\")"
+        return f'Locale("{self._json_location}")'
 
 
 class CustomLocale(Locale):
@@ -217,6 +220,7 @@ class CustomLocale(Locale):
 
     - `json_location` (`str`): The string path to the config file for this `Locale`.
     """
+
     def __init__(self, path_to_json: str):
         super().__init__(path_to_json)
 
@@ -225,5 +229,6 @@ class English(Locale):
     """
     Represents the `English` `Locale`.
     """
+
     def __init__(self):
         super().__init__("locales/english.json")

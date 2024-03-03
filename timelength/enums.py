@@ -10,6 +10,7 @@ class CharacterType(Enum):
     - `ALPHABET`: Represents alphabetic characters.
     - `SPECIAL`: Represents special characters (ex: !).
     """
+
     NUMBER = "NUMBER"
     ALPHABET = "ALPHABET"
     SPECIAL = "SPECIAL"
@@ -26,6 +27,7 @@ class BufferType(Enum):
     - `SPECIAL`: Represents special strings (ex: !$^).
     - `UNKNOWN`: Represents other uncategorizable strings.
     """
+
     NUMBER = "NUMBER"
     SCALE = "SCALE"
     NUMERAL = "NUMERAL"

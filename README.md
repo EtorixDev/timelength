@@ -27,6 +27,7 @@ print(output.result.invalid)
 print(output.result.valid)
 # [(1.0, Scale(86400, "day", "days")), (5.0, Scale(3600, "hour", "hours"))]
 ```
+Additionally, if a single lone value is parsed without a paired scale, seconds will be assumed. However, if more than one value is parsed, nothing will be assumed.
 ### Strict
 While `TimeLength.strict` is `True`, `TimeLength.result.success` will only be `True` if at least one valid result is found and no invalid results are found.
 ```python
@@ -42,6 +43,7 @@ print(output.result.invalid)
 print(output.result.valid)
 # [(3.5, Scale(scale=86400.0, "day", "days")), (35.0, Scale(scale=60.0, "minute", "minutes"))]
 ```
+Additionally, scales must be present unlike with the default behavior. No assumptions will be made.
 
 ## Supported Locales
 1. English
@@ -83,4 +85,4 @@ Valid JSONs must include the following keys, even if their contents are empty:
     - terms
       - All terms that could be parsed as this scale. Accents and other NFKD markings should not be present as they are filtered from the user input.
 - `extra_data`
-  - Any data a parser needs that is not already covered. May be populated or left empty. The locale loads this into a `locale._extra_data` attribute, leaving the parser to utilizes it.
+  - Any data a parser needs that is not already covered. May be populated or left empty. The locale loads this into a `Locale._extra_data` attribute, leaving the parser to utilizes it.
