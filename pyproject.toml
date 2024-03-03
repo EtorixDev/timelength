@@ -7,7 +7,7 @@ license = "MIT"
 readme = "README.md"
 homepage = "https://pypi.org/project/timelength/"
 repository = "https://github.com/EtorixDev/timelength/"
-keywords = ["timelength", "duration", "python"]
+keywords = ["timelength", "duration", "python", "parsing", "time"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
