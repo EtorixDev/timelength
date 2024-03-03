@@ -17,15 +17,17 @@ While `TimeLength.strict` is `False` (default), `TimeLength.result.success` will
 ```python
 from timelength import TimeLength
 
-output = TimeLength("1d5h and 23miles")
+output = TimeLength("1d5h25m and 23miles")
 print(output.result.success)
 # True
 print(output.result.seconds)
-# 104400.0
+# 105900.0
+print(output.to_minutes(max_precision = 3))
+# 29.417
 print(output.result.invalid)
 # [('miles', 'UNKNOWN_TERM'), (23.0, 'LONELY_VALUE')]
 print(output.result.valid)
-# [(1.0, Scale(86400, "day", "days")), (5.0, Scale(3600, "hour", "hours"))]
+# [(1.0, Scale(scale=86400.0)), (5.0, Scale(scale=3600.0)), (25.0, Scale(scale=60.0))]
 ```
 Additionally, if a single lone value is parsed without a paired scale, seconds will be assumed. However, if more than one value is parsed, nothing will be assumed.
 ### Strict
@@ -36,8 +38,6 @@ from timelength import TimeLength
 output = TimeLength("3.5d, 35m, 19", strict = True)
 print(output.result.success)
 # False
-print(output.result.seconds)
-# 304500.0
 print(output.result.invalid)
 # [(19.0, "LONELY_VALUE")]
 print(output.result.valid)
@@ -65,7 +65,7 @@ Valid JSONs must include the following keys, even if their contents are empty:
 - `thousand_separators`
   - Characters used to break up large numbers. Can't have overlap with `decimal_separators`.
 - `parser_file`
-  - The path to this locale's parser file located in `timelength/parsers/`.
+  - The name of this locale's parser file located in `timelength/parsers/`. The internal parser method must share a name with the file.
 - `numerals`
   - Word forms of numbers. May be populated or left empty. Each element must itself have the following keys, even if their contents are not used:
     - `type`

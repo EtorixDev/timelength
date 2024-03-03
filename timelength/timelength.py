@@ -51,7 +51,7 @@ class TimeLength:
 
     def __str__(self) -> str:
         """Return the valid parsed lengths of time."""
-        return self.result.valid
+        return str(self.result.valid)
 
     def __repr__(self) -> str:
         """Return a string representation of the `TimeLength` with attributes included."""

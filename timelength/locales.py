@@ -1,5 +1,5 @@
 from typing import Union
-import importlib
+from importlib import util
 import json
 import os
 
@@ -17,27 +17,23 @@ class Locale:
     - `json_location` (`str`): The string path to the config file for this Locale.
     """
 
-    def __init__(self, json_location: str = "locales/english.json"):
+    def __init__(self, json_location: str = "english.json"):
         """Initialize the `Locale` based on the passed config file."""
         self._json_location = json_location
         self._config = {}
         base_dir = os.path.dirname(__file__)
 
-        if os.path.isabs(json_location):
-            full_json_path = json_location
-        elif "locales/" in json_location:
-            full_json_path = os.path.join(base_dir, json_location)
+        locale_path = os.path.join(base_dir, "locales", json_location)
+        if os.path.exists(locale_path):
+            full_json_path = locale_path
         else:
             full_json_path = json_location
-
         self._load_config(full_json_path)
 
         if not self._config:
             raise LocaleConfigError("Provided config is empty.")
 
-        self._parser_path: str = os.path.join(
-            base_dir, "parsers", self._get_config_or_raise("parser_file")
-        )
+        self._parser_file = self._get_config_or_raise("parser_file")
         self._parser = None
         self._load_parser(base_dir)
 
@@ -164,30 +160,31 @@ class Locale:
         if (
             self._parser
             and callable(self._parser)
-            and self._parser_path.endswith(f"{self._parser.__name__ }.py")
         ):
             return  # Parser already loaded for this locale.
-        if self._parser_path:
-            package_dir = os.path.dirname(base_dir)
-            relative_path = os.path.relpath(self._parser_path, package_dir)
-            module_path = relative_path.replace("\\", ".").split(".py")[0]
-
-            function_name = module_path.split(".")[-1]
-            try:
-                module = importlib.import_module(module_path)
-                self._parser = getattr(module, function_name, None)
-            except ModuleNotFoundError:
-                self._parser = None
-                raise LocaleConfigError(
-                    f"File not found: {self._parser_path}"
-                ) from None
-            except AttributeError:
-                self._parser = None
-                raise LocaleConfigError(
-                    f"Parser function not found: {function_name}"
-                ) from None
+        parser_path = os.path.join(base_dir, "parsers", self._parser_file)
+        if os.path.exists(parser_path):
+            full_parser_path = parser_path
         else:
-            raise LocaleConfigError("No parser path provided in config.")
+            full_parser_path = self._parser_file
+        module_name, _ = os.path.splitext(os.path.basename(full_parser_path))
+        try:
+            spec = util.spec_from_file_location(module_name, full_parser_path)
+            if not spec:
+                raise FileNotFoundError
+            module = util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            self._parser = getattr(module, module_name, None)
+        except (ModuleNotFoundError, FileNotFoundError):
+            self._parser = None
+            raise LocaleConfigError(
+                f"File not found: {self._parser_file}"
+            ) from None
+        except AttributeError:
+            self._parser = None
+            raise LocaleConfigError(
+                f"Parser function not found: {module_name}"
+            ) from None
 
     def _load_config(self, file: str):
         """Load the config from the provided path."""
@@ -231,4 +228,4 @@ class English(Locale):
     """
 
     def __init__(self):
-        super().__init__("locales/english.json")
+        super().__init__("english.json")
