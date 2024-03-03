@@ -51,7 +51,7 @@ Additionally, scales must be present unlike with the default behavior. No assump
 3. Custom (Write your own parsing logic if your `Locale`'s grammar structure differs too drastically) (PRs welcome)
 
 ## Customization
-`timelength` allows for customizing the parsing behavior through JSON configuration. To get started, copy an existing locale JSON in `timelength/locales/`.
+`timelength` allows for customizing the parsing behavior through JSON configuration. To get started, copy an existing locale JSON in `timelength/locales/`. The custom JSON may be placed anywhere.
 
 Valid JSONs must include the following keys, even if their contents are empty: 
 - `connectors`
@@ -65,7 +65,7 @@ Valid JSONs must include the following keys, even if their contents are empty:
 - `thousand_separators`
   - Characters used to break up large numbers. Can't have overlap with `decimal_separators`.
 - `parser_file`
-  - The name of this locale's parser file located in `timelength/parsers/`. The internal parser method must share a name with the file.
+  - The name of this locale's parser file located in `timelength/parsers/`, or the path to the parser file if a custom one is being used. The internal parser method must share a name with the file.
 - `numerals`
   - Word forms of numbers. May be populated or left empty. Each element must itself have the following keys, even if their contents are not used:
     - `type`
@@ -86,3 +86,11 @@ Valid JSONs must include the following keys, even if their contents are empty:
       - All terms that could be parsed as this scale. Accents and other NFKD markings should not be present as they are filtered from the user input.
 - `extra_data`
   - Any data a parser needs that is not already covered. May be populated or left empty. The locale loads this into a `Locale._extra_data` attribute, leaving the parser to utilizes it.
+
+Once your custom JSON is filled out, you can use it as follows:
+```python
+from timelength import TimeLength, CustomLocale
+
+output = TimeLength("30 minutes", locale = CustomLocale("path/to/config.json"))
+```
+If all goes well, the parsing will succeed, and if not, an error will point you in the right direction.
