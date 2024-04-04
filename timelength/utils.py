@@ -3,7 +3,7 @@ import unicodedata
 from timelength.enums import BufferType, CharacterType
 
 
-def is_float(num: str):
+def is_float(num: str) -> bool:
     """Check if the passed string is a number."""
     try:
         float(num)
@@ -12,7 +12,7 @@ def is_float(num: str):
         return False
 
 
-def character_type(text: str):
+def character_type(text: str) -> CharacterType:
     """Check the type of the passed character based on the `CharacterType` enum."""
     if is_float(text):
         return CharacterType.NUMBER
@@ -22,7 +22,7 @@ def character_type(text: str):
         return CharacterType.SPECIAL
 
 
-def buffer_type(text: str, scales: list, numerals: list, symbols: list):
+def buffer_type(text: str, scales: list, numerals: list, symbols: list) -> BufferType:
     """Check the type of the passed string based on the `BufferType` enum."""
     if is_float(text):
         return BufferType.NUMBER
@@ -36,7 +36,7 @@ def buffer_type(text: str, scales: list, numerals: list, symbols: list):
         return BufferType.UNKNOWN
 
 
-def remove_diacritics(text: str):
+def remove_diacritics(text: str) -> str:
     """Replace accented and special characters with their normalized equivalents."""
     nfkd_form = unicodedata.normalize("NFKD", text)
     return "".join([c for c in nfkd_form if not unicodedata.combining(c)])

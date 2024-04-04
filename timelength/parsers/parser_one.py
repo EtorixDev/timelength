@@ -92,12 +92,12 @@ def parser_one(
                             == CharacterType.NUMBER
                             for i in range(1, 4)
                         )
-                    ):  
+                    ):
                         break
                     else:
                         for num in range(1, 4):
                             buffer += content[next_index + num]
-                            
+
                         next_index += 4
                         skip_iteration += 4
                         skip_thousand = 4
@@ -160,12 +160,12 @@ def parser_one(
         else:
             buffer += char
             save_buffer()
-        
+
         last_alphanum = current_alphanum
 
     if buffer:
         save_buffer()
-    
+
     potential_values = []
     skip_buffer = 0
     for index, item in enumerate(buffer_values):
@@ -176,7 +176,10 @@ def parser_one(
             continue
         if item[1] == BufferType.UNKNOWN:
             result.invalid.append((item[0], "UNKNOWN_TERM"))
-            if index + 1 < len(buffer_values) and buffer_values[index + 1][0] in locale._connectors:
+            if (
+                index + 1 < len(buffer_values)
+                and buffer_values[index + 1][0] in locale._connectors
+            ):
                 skip_buffer += 1
         else:
             potential_values.append(item)

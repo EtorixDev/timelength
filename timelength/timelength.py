@@ -1,4 +1,5 @@
 import typing
+
 from timelength.dataclasses import ParsedTimeLength
 from timelength.errors import DisabledScale, LocaleConfigError
 from timelength.locales import English, Locale

@@ -1,11 +1,10 @@
-from typing import Union
-from importlib import util
 import json
 import os
+from importlib import util
+from typing import Union
 
-
-from timelength.errors import LocaleConfigError
 from timelength.dataclasses import Scale
+from timelength.errors import LocaleConfigError
 
 
 class Locale:
@@ -157,10 +156,7 @@ class Locale:
 
     def _load_parser(self, base_dir):
         """Load the parser file linked in the config file into a method attached to the `Locale`."""
-        if (
-            self._parser
-            and callable(self._parser)
-        ):
+        if self._parser and callable(self._parser):
             return  # Parser already loaded for this locale.
         parser_path = os.path.join(base_dir, "parsers", self._parser_file)
         if os.path.exists(parser_path):
@@ -179,9 +175,7 @@ class Locale:
                 raise AttributeError
         except (ModuleNotFoundError, FileNotFoundError):
             self._parser = None
-            raise LocaleConfigError(
-                f"File not found: {self._parser_file}"
-            ) from None
+            raise LocaleConfigError(f"File not found: {self._parser_file}") from None
         except AttributeError:
             self._parser = None
             raise LocaleConfigError(
@@ -190,7 +184,7 @@ class Locale:
 
     def _load_config(self, file: str):
         """Load the config from the provided path."""
-        with open(file, "r", encoding = "utf-8") as f:
+        with open(file, "r", encoding="utf-8") as f:
             self._config = json.load(f)
 
     def _get_config_or_raise(self, key: str) -> Union[str, float, list, dict]:
@@ -231,6 +225,7 @@ class English(Locale):
 
     def __init__(self):
         super().__init__("english.json")
+
 
 class Spanish(Locale):
     """
