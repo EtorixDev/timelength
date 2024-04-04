@@ -1,7 +1,7 @@
 {
     "connectors": [" ", "\t", "-"],
     "segmentors": [",", "y", "&"],
-    "allowed_terms": ["!", "¿", "?", "'", ".", ",", "la", "le", "lo"],
+    "allowed_terms": ["!", "¿", "?", "'", ".", ",", "la", "le", "lo", "las", "les", "los"],
     "decimal_separators": [","],
     "thousand_separators": [".", " "],
     "parser_file": "parser_one.py",
@@ -214,7 +214,7 @@
         "full": {
             "type": "modifiers",
             "value": 1.0,
-            "terms": ["completo", "Completo", "COMPLETO", "total", "Total", "TOTAL"]
+            "terms": ["completo", "Completo", "COMPLETO", "completos", "Completos", "COMPLETOS", "completa", "Completa", "COMPLETA", "completas", "Completas", "COMPLETAS", "total", "Total", "TOTAL", "totales", "Totales", "TOTALES", "lleno", "Lleno", "LLENO", "llenos", "Llenos", "LLENOS", "llena", "Llena", "LLENA", "llenas", "Llenas", "LLENAS", "entero", "Entero", "ENTERO", "enteros", "Enteros", "ENTEROS", "entera", "Entera", "ENTERA", "enteras", "Enteras", "ENTERAS", "todo", "Todo", "TODO", "todos", "Todos", "TODOS", "toda", "Toda", "TODA", "todas", "Todas", "TODAS"]
         },
         "half": {
             "type": "modifiers",
@@ -224,7 +224,7 @@
         "third": {
             "type": "modifiers",
             "value": "1/3",
-            "terms": ["tercio", "Tercio", "TERCIO", "tercios", "Tercios", "TERCIOS"]
+            "terms": ["tercio", "Tercio", "TERCIO", "tercios", "Tercios", "TERCIOS", "tercero", "Tercero", "TERCERO", "terceros", "Terceros", "TERCEROS", "tercera", "Tercera", "TERCERA", "terceras", "Terceras", "TERCERAS"]
         },
         "quarter": {
             "type": "modifiers",
