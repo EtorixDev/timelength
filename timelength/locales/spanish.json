@@ -161,7 +161,7 @@
             "value": 30.0,
             "terms": ["treinta", "Treinta", "TREINTA", "treintas", "Treintas", "TREINTAS"]
         },
-        "fourty": {
+        "forty": {
             "type": "tens",
             "value": 40.0,
             "terms": ["cuarenta", "Cuarenta", "CUARENTA", "cuarentas", "Cuarentas", "CUARENTAS"]

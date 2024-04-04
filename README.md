@@ -23,13 +23,26 @@ print(output.result.success)
 print(output.result.seconds)
 # 105900.0
 print(output.to_minutes(max_precision = 3))
-# 29.417
+# 1765.0
 print(output.result.invalid)
 # [('miles', 'UNKNOWN_TERM'), (23.0, 'LONELY_VALUE')]
 print(output.result.valid)
-# [(1.0, Scale(scale=86400.0)), (5.0, Scale(scale=3600.0)), (25.0, Scale(scale=60.0))]
+# [(1.0, Scale(86400.0, "day", "days")), (5.0, Scale(3600.0, "hour", "hours")), (25.0, Scale(60.0, "minute", "minutes"))]
 ```
 Additionally, if a single lone value is parsed without a paired scale, seconds will be assumed. However, if more than one value is parsed, nothing will be assumed.
+```python
+output = TimeLength("45")
+print(output.result.invalid)
+# []
+print(output.result.valid)
+# [(45.0, Scale(1.0, "second", "seconds"))]
+
+output = TimeLength("45 minutes, 33")
+print(output.result.invalid)
+# [(33.0, 'LONELY_VALUE')]
+print(output.result.valid)
+# [(45.0, Scale(60.0, "minute", "minutes"))]
+```
 ### Strict
 While `TimeLength.strict` is `True`, `TimeLength.result.success` will only be `True` if at least one valid result is found and no invalid results are found.
 ```python
@@ -43,15 +56,18 @@ print(output.result.invalid)
 print(output.result.valid)
 # [(3.5, Scale(scale=86400.0, "day", "days")), (35.0, Scale(scale=60.0, "minute", "minutes"))]
 ```
-Additionally, scales must be present unlike with the default behavior. No assumptions will be made.
+Additionally, unlike with the default behavior, scales must be present. No assumptions will be made.
 
 ## Supported Locales
 1. English
-2. Custom (Copy & modify an existing config with new terms as long as your new `Locale` follows the existing config parser's grammar structure)
-3. Custom (Write your own parsing logic if your `Locale`'s grammar structure differs too drastically) (PRs welcome)
+2. Spanish
+3. Custom (Copy & modify an existing config with new terms as long as your new `Locale` follows the existing config parser's grammar structure)
+4. Custom (Write your own parsing logic if your `Locale`'s grammar structure differs too drastically) (PRs welcome)
 
 ## Customization
 `timelength` allows for customizing the parsing behavior through JSON configuration. To get started, copy an existing locale JSON in `timelength/locales/`. The custom JSON may be placed anywhere.
+
+**Ensure the JSON being used is from a trusted source, as the parser is loaded dynamically based on the file specified in the JSON. This could allow for unintended code execution if an unsafe config is loaded.**
 
 Valid JSONs must include the following keys, even if their contents are empty: 
 - `connectors`
@@ -65,7 +81,9 @@ Valid JSONs must include the following keys, even if their contents are empty:
 - `thousand_separators`
   - Characters used to break up large numbers. Can't have overlap with `decimal_separators`.
 - `parser_file`
-  - The name of this locale's parser file located in `timelength/parsers/`, or the path to the parser file if a custom one is being used. Ensure only a trusted file is used as this could allow unintended code execution. The internal parser method must share a name with the file.
+  - The name of this locale's parser file located in `timelength/parsers/`, or the path to the parser file if stored elsewhere. 
+  - **Ensure only a trusted file is used as this could allow unintended code execution.**
+  - The internal parser method must share a name with the file.
 - `numerals`
   - Word forms of numbers. May be populated or left empty. Each element must itself have the following keys, even if their contents are not used:
     - `type`
