@@ -65,7 +65,7 @@ Valid JSONs must include the following keys, even if their contents are empty:
 - `thousand_separators`
   - Characters used to break up large numbers. Can't have overlap with `decimal_separators`.
 - `parser_file`
-  - The name of this locale's parser file located in `timelength/parsers/`, or the path to the parser file if a custom one is being used. The internal parser method must share a name with the file.
+  - The name of this locale's parser file located in `timelength/parsers/`, or the path to the parser file if a custom one is being used. Ensure only a trusted file is used as this could allow unintended code execution. The internal parser method must share a name with the file.
 - `numerals`
   - Word forms of numbers. May be populated or left empty. Each element must itself have the following keys, even if their contents are not used:
     - `type`

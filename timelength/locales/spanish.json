@@ -1,0 +1,304 @@
+{
+    "connectors": [" ", "\t", "-"],
+    "segmentors": [",", "y", "&"],
+    "allowed_terms": ["!", "¿", "?", "'", ".", ",", "la", "le", "lo"],
+    "decimal_separators": [","],
+    "thousand_separators": [".", " "],
+    "parser_file": "parser_one.py",
+    "numerals": {
+        "zero": {
+            "type": "digits",
+            "value": 0.0,
+            "terms": ["cero", "Cero", "CERO", "ceros", "Ceros", "CEROS"]
+        },
+        "one": {
+            "type": "digits",
+            "value": 1.0,
+            "terms": ["uno", "Uno", "UNO", "unos", "Unos", "UNOS", "un", "Un", "UN", "uns", "Uns", "UNS", "una", "Una", "UNA", "unas", "Unas", "UNAS"]
+        },
+        "two": {
+            "type": "digits",
+            "value": 2.0,
+            "terms": ["dos", "Dos", "DOS", "doses", "Doses", "DOSES"]
+        },
+        "three": {
+            "type": "digits",
+            "value": 3.0,
+            "terms": ["tres", "Tres", "TRES", "treses", "Treses", "TRESES"]
+        },
+        "four": {
+            "type": "digits",
+            "value": 4.0,
+            "terms": ["cuatro", "Cuatro", "CUATRO", "cuatros", "Cuatros", "CUATROS"]
+        },
+        "five": {
+            "type": "digits",
+            "value": 5.0,
+            "terms": ["cinco", "Cinco", "CINCO", "cincos", "Cincos", "CINCOS"]
+        },
+        "six": {
+            "type": "digits",
+            "value": 6.0,
+            "terms": ["seis", "Seis", "SEIS", "seises", "Seises", "SEISES"]
+        },
+        "seven": {
+            "type": "digits",
+            "value": 7.0,
+            "terms": ["siete", "Siete", "SIETE", "sietes", "Sietes", "SIETES"]
+        },
+        "eight": {
+            "type": "digits",
+            "value": 8.0,
+            "terms": ["ocho", "Ocho", "OCHO", "ochos", "Ochos", "OCHOS"]
+        },
+        "nine": {
+            "type": "digits",
+            "value": 9.0,
+            "terms": ["nueve", "Nueve", "NUEVE", "nueves", "Nueves", "NUEVES"]
+        },
+        "ten": {
+            "type": "teens",
+            "value": 10.0,
+            "terms": ["diez", "Diez", "DIEZ", "dies", "Dies", "DIES", "diec", "Diec", "DIEC", "diezes", "Diezes", "DIEZES", "dieses", "Dieses", "DIESES", "dieces", "Dieces", "DIECES"]
+        },
+        "eleven": {
+            "type": "teens",
+            "value": 11.0,
+            "terms": ["once", "Once", "ONCE", "onces", "Onces", "ONCES"]
+        },
+        "twelve": {
+            "type": "teens",
+            "value": 12.0,
+            "terms": ["doce", "Doce", "DOCE", "doces", "Doces", "DOCES"]
+        },
+        "thirteen": {
+            "type": "teens",
+            "value": 13.0,
+            "terms": ["trece", "Trece", "TRECE", "treces", "Treces", "TRECES"]
+        },
+        "fourteen": {
+            "type": "teens",
+            "value": 14.0,
+            "terms": ["catorce", "Catorce", "CATORCE", "catorces", "Catorces", "CATORCES"]
+        },
+        "fifteen": {
+            "type": "teens",
+            "value": 15.0,
+            "terms": ["quince", "Quince", "QUINCE", "quinces", "Quinces", "QUINCES"]
+        },
+        "sixteen": {
+            "type": "teens",
+            "value": 16.0,
+            "terms": ["dieciseis", "Dieciseis", "DIECISEIS", "dieciseises", "Dieciseises", "DIECISEISES"]
+        },
+        "seventeen": {
+            "type": "teens",
+            "value": 17.0,
+            "terms": ["diecisiete", "Diecisiete", "DIECISIETE", "diecisietes", "Diecisietes", "DIECISIETES"]
+        },
+        "eighteen": {
+            "type": "teens",
+            "value": 18.0,
+            "terms": ["dieciocho", "Dieciocho", "DIECIOCHO", "dieciochos", "Dieciochos", "DIECIOCHOS"]
+        },
+        "nineteen": {
+            "type": "teens",
+            "value": 19.0,
+            "terms": ["diecinueve", "Diecinueve", "DIECINUEVE", "diecinueves", "Diecinueves", "DIECINUEVES"]
+        },
+        "twenty": {
+            "type": "tens",
+            "value": 20.0,
+            "terms": ["veinte", "Veinte", "VEINTE", "veintes", "Veintes", "VEINTES"]
+        },
+        "twenty-one": {
+            "type": "tens",
+            "value": 21.0,
+            "terms": ["veintiuno", "Veintiuno", "VEINTIUNO", "veintiunos", "Veintiunos", "VEINTIUNOS", "veintiuna", "Veintiuna", "VEINTIUNA", "veintiunas", "Veintiunas", "VEINTIUNAS"]
+        },
+        "twenty-two": {
+            "type": "tens",
+            "value": 22.0,
+            "terms": ["veintidos", "Veintidos", "VEINTIDOS", "veintidoses", "Veintidoses", "VEINTIDOSES"]
+        },
+        "twenty-three": {
+            "type": "tens",
+            "value": 23.0,
+            "terms": ["veintitres", "Veintitres", "VEINTITRES", "veintitreses", "Veintitreses", "VEINTITRESES"]
+        },
+        "twenty-four": {
+            "type": "tens",
+            "value": 24.0,
+            "terms": ["veinticuatro", "Veinticuatro", "VEINTICUATRO", "veinticuatros", "Veinticuatros", "VEINTICUATROS"]
+        },
+        "twenty-five": {
+            "type": "tens",
+            "value": 25.0,
+            "terms": ["veinticinco", "Veinticinco", "VEINTICINCO", "veinticincos", "Veinticincos", "VEINTICINCOS"]
+        },
+        "twenty-six": {
+            "type": "tens",
+            "value": 26.0,
+            "terms": ["veintiseis", "Veintiseis", "VEINTISEIS", "veintiseises", "Veintiseises", "VEINTISEISES"]
+        },
+        "twenty-seven": {
+            "type": "tens",
+            "value": 27.0,
+            "terms": ["veintisiete", "Veintisiete", "VEINTISIETE", "veintisietes", "Veintisietes", "VEINTISIETES"]
+        },
+        "twenty-eight": {
+            "type": "tens",
+            "value": 28.0,
+            "terms": ["veintiocho", "Veintiocho", "VEINTIOCHO", "veintiochos", "Veintiochos", "VEINTIOCHOS"]
+        },
+        "twenty-nine": {
+            "type": "tens",
+            "value": 29.0,
+            "terms": ["veintinueve", "Veintinueve", "VEINTINUEVE", "veintinueves", "Veintinueves", "VEINTINUEVES"]
+        },
+        "thirty": {
+            "type": "tens",
+            "value": 30.0,
+            "terms": ["treinta", "Treinta", "TREINTA", "treintas", "Treintas", "TREINTAS"]
+        },
+        "fourty": {
+            "type": "tens",
+            "value": 40.0,
+            "terms": ["cuarenta", "Cuarenta", "CUARENTA", "cuarentas", "Cuarentas", "CUARENTAS"]
+        },
+        "fifty": {
+            "type": "tens",
+            "value": 50.0,
+            "terms": ["cincuenta", "Cincuenta", "CINCUENTA", "cincuentas", "Cincuentas", "CINCUENTAS"]
+        },
+        "sixty": {
+            "type": "tens",
+            "value": 60.0,
+            "terms": ["sesenta", "Sesenta", "SESENTA", "sesentas", "Sesentas", "SESENTAS"]
+        },
+        "seventy": {
+            "type": "tens",
+            "value": 70.0,
+            "terms": ["setenta", "Setenta", "SETENTA", "setentas", "Setentas", "SETENTAS"]
+        },
+        "eighty": {
+            "type": "tens",
+            "value": 80.0,
+            "terms": ["ochenta", "Ochenta", "OCHENTA", "ochentas", "Ochentas", "OCHENTAS"]
+        },
+        "ninety": {
+            "type": "tens",
+            "value": 90.0,
+            "terms": ["noventa", "Noventa", "NOVENTA", "noventas", "Noventas", "NOVENTAS"]
+        },
+        "hundred": {
+            "type": "thousands",
+            "value": 100.0,
+            "terms": ["cien", "Cien", "CIEN", "ciens", "Ciens", "CIENS", "cienes", "Cienes", "CIENES", "cientos", "Cientos", "CIENTOS"]
+        },
+        "thousand": {
+            "type": "thousands",
+            "value": 1000.0,
+            "terms": ["mil", "Mil", "MIL", "mils", "Mils", "MILS", "miles", "Miles", "MILES"]
+        },
+        "million": {
+            "type": "thousands",
+            "value": 1000000.0,
+            "terms": ["millon", "Millon", "MILLON", "millons", "Millons", "MILLONS", "millones", "Millones", "MILLONES"]
+        },
+        "trillion": {
+            "type": "thousands",
+            "value": 1000000000000.0,
+            "terms": ["billon", "Billon", "BILLON", "billons", "Billons", "BILLONS", "billones", "Billones", "BILLONES"]
+        },
+        "full": {
+            "type": "modifiers",
+            "value": 1.0,
+            "terms": ["completo", "Completo", "COMPLETO", "total", "Total", "TOTAL"]
+        },
+        "half": {
+            "type": "modifiers",
+            "value": 0.5,
+            "terms": ["medio", "Medio", "MEDIO", "medios", "Medios", "MEDIOS", "media", "Media", "MEDIA", "medias", "Medias", "MEDIAS", "mitad", "Mitad", "MITAD", "mitads", "Mitads", "MITADS"]
+        },
+        "third": {
+            "type": "modifiers",
+            "value": "1/3",
+            "terms": ["tercio", "Tercio", "TERCIO", "tercios", "Tercios", "TERCIOS"]
+        },
+        "quarter": {
+            "type": "modifiers",
+            "value": 0.25,
+            "terms": ["cuarto", "Cuarto", "CUARTO", "cuartos", "Cuartos", "CUARTOS"]
+        },
+        "multiplier": {
+            "type": "multiplier",
+            "value": -1.0,
+            "terms": ["de", "De", "DE"]
+        }
+    },
+    "scales": {
+        "millisecond": {
+            "scale": 0.001,
+            "singular": "milisegundo",
+            "plural": "milisegundos",
+            "terms": ["ms", "Ms", "MS", "milisegundo", "Milisegundo", "MILISEGUNDO", "milisegundos", "Milisegundos", "MILISEGUNDOS"]
+        },
+        "second": {
+            "scale": 1.0,
+            "singular": "segundo",
+            "plural": "segundos",
+            "terms": ["s", "S", "seg", "Seg", "SEG", "segs", "Segs", "SEGS", "segundo", "Segundo", "SEGUNDO", "segundos", "Segundos", "SEGUNDOS"]
+        },
+        "minute": {
+            "scale": 60.0,
+            "singular": "minuto",
+            "plural": "minutos",
+            "terms": ["m", "min", "Min", "MIN", "mins", "Mins", "MINS", "minuto", "Minuto", "MINUTO", "minutos", "Minutos", "MINUTOS"]
+        },
+        "hour": {
+            "scale": 3600.0,
+            "singular": "hora",
+            "plural": "horas",
+            "terms": ["h", "H", "hr", "Hr", "HR", "hrs", "Hrs", "HRS", "hora", "Hora", "HORA", "horas", "Horas", "HORAS"]
+        },
+        "day": {
+            "scale": 86400.0,
+            "singular": "dia",
+            "plural": "dias",
+            "terms": ["d", "dia", "Dia", "DIA", "dias", "Dias", "DIAS"]
+        },
+        "week": {
+            "scale": 604800.0,
+            "singular": "semana",
+            "plural": "semanas",
+            "terms": ["sem", "Sem", "SEM", "semana", "Semana", "SEMANA", "semanas", "Semanas", "SEMANAS"]
+        },
+        "month": {
+            "scale": 2635200.0,
+            "singular": "mes",
+            "plural": "meses",
+            "terms": ["M", "mes", "Mes", "MES", "meses", "Meses", "MESES", "mo", "Mo", "MO", "mos", "Mos", "MOS"]
+        },
+        "year": {
+            "scale": 31536000.0,
+            "singular": "ano",
+            "plural": "anos",
+            "terms": ["a", "A", "ano", "Ano", "ANO", "anos", "Anos", "ANOS"]
+        },
+        "decade": {
+            "scale": 315360000.0,
+            "singular": "decada",
+            "plural": "decadas",
+            "terms": ["D", "dec", "Dec", "DEC", "decs", "Decs", "DECS", "decada", "Decada", "DECADA", "decadas", "Decadas", "DECADAS"]
+        },
+        "century": {
+            "scale": 3153600000.0,
+            "singular": "siglo",
+            "plural": "siglos",
+            "terms": ["c", "C", "siglo", "Siglo", "SIGLO", "siglos", "Siglos", "SIGLOS"]
+        }
+    },
+    "extra_data": {
+    }
+}

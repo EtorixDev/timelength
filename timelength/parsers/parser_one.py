@@ -35,7 +35,7 @@ def parser_one(
                     if "terms" in numerals[numeral]
                     for term in numerals[numeral]["terms"]
                 ],
-                locale._connectors + locale._segmentors + locale._allowed_symbols,
+                locale._connectors + locale._segmentors + locale._allowed_terms,
             )
             buffer_values.append(
                 (
@@ -86,48 +86,18 @@ def parser_one(
                     and content[next_index] in locale._thousand_separators
                 ):
                     if not (
-                        next_index + 3 < len(content)
+                        (next_index + 3) < len(content)
                         and all(
                             character_type(content[next_index + i])
                             == CharacterType.NUMBER
                             for i in range(1, 4)
                         )
-                    ):
-                        if (
-                            next_index + 2 < len(content)
-                            and character_type(content[next_index + 1])
-                            == CharacterType.NUMBER
-                            and content[next_index + 2] in locale._connectors
-                        ):
-                            pass
-                        elif (
-                            next_index + 3 < len(content)
-                            and character_type(content[next_index + 1])
-                            == CharacterType.NUMBER
-                            and character_type(content[next_index + 2])
-                            == CharacterType.NUMBER
-                            and content[next_index + 3] in locale._connectors
-                        ):
-                            pass
-                        elif (
-                            next_index + 1 < len(content)
-                            and character_type(content[next_index + 1])
-                            == CharacterType.NUMBER
-                        ):
-                            result.invalid.append(
-                                (
-                                    f"{content[next_index - 1]}{content[next_index]}{content[next_index + 1]}",
-                                    "MALFORMED_THOUSANDS",
-                                )
-                            )
-                            next_index += 1
-                            skip_iteration += 1
-                            buffer = ""
+                    ):  
                         break
                     else:
                         for num in range(1, 4):
                             buffer += content[next_index + num]
-
+                            
                         next_index += 4
                         skip_iteration += 4
                         skip_thousand = 4
@@ -181,7 +151,7 @@ def parser_one(
             and char
             not in locale._connectors
             + locale._segmentors
-            + locale._allowed_symbols
+            + locale._allowed_terms
             + locale._decimal_separators
             + locale._thousand_separators
         ):
@@ -190,22 +160,27 @@ def parser_one(
         else:
             buffer += char
             save_buffer()
-
+        
         last_alphanum = current_alphanum
 
     if buffer:
         save_buffer()
+    
+    potential_values = []
+    skip_buffer = 0
+    for index, item in enumerate(buffer_values):
+        if skip_buffer:
+            skip_buffer -= 1
+            continue
+        if not item:
+            continue
+        if item[1] == BufferType.UNKNOWN:
+            result.invalid.append((item[0], "UNKNOWN_TERM"))
+            if index + 1 < len(buffer_values) and buffer_values[index + 1][0] in locale._connectors:
+                skip_buffer += 1
+        else:
+            potential_values.append(item)
 
-    result.invalid = [
-        (item[0], "UNKNOWN_TERM")
-        for item in buffer_values
-        if item and item[1] == BufferType.UNKNOWN
-    ]
-    potential_values = [
-        item
-        for item in buffer_values
-        if (item[0], "UNKNOWN_TERM") not in result.invalid
-    ]
     parsed_value = None
     segment_value = None
     parsed_scale = None
@@ -221,50 +196,45 @@ def parser_one(
 
     def handle_multiplier(text: str, index: int):
         nonlocal parsed_value, segment_value
-        valid_previous = False
-        valid_next = False
+        previous_numeric = False
+        next_numeric = False
+        next_term = False
         previous_value = 0.0
         next_value = 0.0
         if (index - 2) >= 0:
             previous_type = potential_values[index - 2][1]
             if previous_type == BufferType.NUMERAL:
-                valid_previous = True
+                previous_numeric = True
                 previous_value = locale._get_numeral(potential_values[index - 2][0])[
                     "value"
                 ]
                 if isinstance(previous_value, str):
                     previous_value = float(Fraction(previous_value))
             elif previous_type == BufferType.NUMBER:
-                valid_previous = True
+                previous_numeric = True
                 previous_value = potential_values[index - 2][0]
         if (index + 2) < len(potential_values):
             next_type = potential_values[index + 2][1]
             if next_type == BufferType.NUMERAL:
-                valid_next = True
+                next_numeric = True
                 next_value = locale._get_numeral(potential_values[index + 2][0])[
                     "value"
                 ]
                 if isinstance(next_value, str):
                     next_value = float(Fraction(next_value))
             elif next_type == BufferType.NUMBER:
-                valid_next = True
+                next_numeric = True
                 next_value = potential_values[index + 2][0]
-        if valid_previous and valid_next:
-            print(previous_value)
-            print(next_value)
+            elif next_type == BufferType.SCALE:
+                next_term = True
+        if previous_numeric and next_numeric:
             potential_values[index + 2] = (
                 previous_value * next_value,
                 BufferType.NUMBER,
             )
         else:
-            if not valid_previous and not valid_next:
-                result.invalid.append((text, "MISPLACED_MULTIPLIER"))
-            elif (not valid_previous and valid_next) or (
-                valid_previous and not valid_next
-            ):
+            if (not previous_numeric and not next_numeric) or not next_term:
                 result.invalid.append((text, "UNUSED_MULTIPLIER"))
-            segment_value = None
-            parsed_value = None
 
     def handle_special(symbol: str):
         if symbol in previous_specials:
@@ -272,13 +242,15 @@ def parser_one(
         previous_specials.append(symbol)
 
     def handle_float(number: float):
-        nonlocal parsed_value, current_numeral_type, current_value_type_converted
-        current_numeral_type = None
+        nonlocal parsed_value, segment_value
 
         if (
             previous_value_type_converted == BufferType.NUMBER
             and not starts_with_modifier
         ):
+            if segment_value:
+                result.invalid.append((segment_value, "LONELY_VALUE"))
+                segment_value = None
             result.invalid.append((parsed_value, "CONSECUTIVE_VALUES"))
         parsed_value = number
 
@@ -287,7 +259,8 @@ def parser_one(
             parsed_value, \
             current_numeral_type, \
             current_value_type_converted, \
-            starts_with_modifier
+            starts_with_modifier, \
+            segment_value
 
         numeral = locale._get_numeral(text)
         numeral_value = (
@@ -327,21 +300,21 @@ def parser_one(
             parsed_value *= numeral_value
         elif current_numeral_type == "digits" and previous_numeral_type == "tens":
             parsed_value = parsed_value + numeral_value
-            current_numeral_type = None
         elif current_numeral_type == "digits" and previous_numeral_type == "digits":
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
-            current_numeral_type = None
         elif current_numeral_type in ["teens", "tens"] and previous_numeral_type in [
             "digits",
             "teens",
             "tens",
         ]:
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
-            current_numeral_type = None
         elif (
             previous_value_type_converted == BufferType.NUMBER
             or previous_numeral_type == "modifiers"
         ) and current_numeral_type not in ["thousands", "modifiers"]:
+            if segment_value:
+                result.invalid.append((segment_value, "LONELY_VALUE"))
+                segment_value = None
             result.invalid.append((parsed_value, "CONSECUTIVE_VALUES"))
             parsed_value = numeral_value
         else:
@@ -349,7 +322,6 @@ def parser_one(
 
     def handle_scale(text: str):
         nonlocal parsed_value, segment_value, result, parsed_scale, current_numeral_type
-        current_numeral_type = None
 
         if index == 0:
             result.invalid.append((text, "LEADING_SCALE"))
@@ -382,7 +354,7 @@ def parser_one(
             if parsed_value is not None:
                 handle_multiplier(current_value, index)
             else:
-                result.invalid.append((current_value, "MISPLACED_MULTIPLIER"))
+                result.invalid.append((current_value, "UNUSED_MULTIPLIER"))
                 segment_value = None
                 parsed_value = None
                 handle_special(current_value)
@@ -436,13 +408,7 @@ def parser_one(
             parsed_value = 0.0
         if not segment_value:
             segment_value = 0.0
-        selected_value = (
-            parsed_value
-            if parsed_value is not None
-            else segment_value
-            if segment_value is not None
-            else ""
-        )
+        selected_value = parsed_value + segment_value
         if not strict and len(potential_values) == 1:
             result.valid.append((parsed_value + segment_value, locale._second))
             result.seconds += parsed_value + segment_value

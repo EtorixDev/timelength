@@ -44,8 +44,8 @@ class Locale:
                 "Connectors and Segmentors may not have overlap in config."
             )
 
-        # _allowed_symbols may appear ONCE in a row in the input while strict is enabled.
-        self._allowed_symbols = self._get_config_or_raise("allowed_symbols")
+        # _allowed_terms may appear ONCE in a row in the input while strict is enabled.
+        self._allowed_terms = self._get_config_or_raise("allowed_terms")
         self._decimal_separators = self._get_config_or_raise("decimal_separators")
         self._thousand_separators = self._get_config_or_raise("thousand_separators")
         if set(self._decimal_separators).intersection(self._thousand_separators):
@@ -175,6 +175,8 @@ class Locale:
             module = util.module_from_spec(spec)
             spec.loader.exec_module(module)
             self._parser = getattr(module, module_name, None)
+            if not callable(self._parser):
+                raise AttributeError
         except (ModuleNotFoundError, FileNotFoundError):
             self._parser = None
             raise LocaleConfigError(
@@ -188,7 +190,7 @@ class Locale:
 
     def _load_config(self, file: str):
         """Load the config from the provided path."""
-        with open(file, "r") as f:
+        with open(file, "r", encoding = "utf-8") as f:
             self._config = json.load(f)
 
     def _get_config_or_raise(self, key: str) -> Union[str, float, list, dict]:
@@ -229,3 +231,11 @@ class English(Locale):
 
     def __init__(self):
         super().__init__("english.json")
+
+class Spanish(Locale):
+    """
+    Represents the `Spanish` `Locale`.
+    """
+
+    def __init__(self):
+        super().__init__("spanish.json")

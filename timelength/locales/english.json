@@ -1,7 +1,7 @@
 {
     "connectors": [" ", "\t", "-"],
     "segmentors": [",", "and", "&"],
-    "allowed_symbols": ["!", "?", "'", ".", ","],
+    "allowed_terms": ["!", "?", "'", ".", ",", "the"],
     "decimal_separators": ["."],
     "thousand_separators": [",", " "],
     "parser_file": "parser_one.py",
@@ -116,10 +116,10 @@
             "value": 30.0,
             "terms": ["thirty", "Thirty", "THIRTY", "thirties", "Thirties", "THIRTIES"]
         },
-        "fourty": {
+        "forty": {
             "type": "tens",
             "value": 40.0,
-            "terms": ["forty", "Forty", "FORTY", "forties", "Forties", "FORTIES"]
+            "terms": ["forty", "Forty", "FORTY", "forties", "Forties", "FORTIES", "fourty", "Fourty", "FOURTY", "fourties", "Fourties", "FOURTIES"]
         },
         "fifty": {
             "type": "tens",

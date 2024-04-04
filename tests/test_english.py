@@ -45,6 +45,7 @@ def generate_notstrict_tests():
     cases.append(("zero", True, 0.0, [], [(0.0, Scale(scale=1.0))],))
     cases.append(("zero minutes", True, 0.0, [], [(0.0, Scale(scale=60.0))],))
     cases.append(("five", True, 5.0, [], [(5.0, Scale(scale=1.0))],))
+    
     cases.append(("twenty-two sec", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
     cases.append(("thousand seconds", True, 1000.0, [], [(1000.0, Scale(scale=1.0))],))
     cases.append(("a million seconds", True, 1000000.0, [], [(1000000.0, Scale(scale=1.0))],))
@@ -52,7 +53,10 @@ def generate_notstrict_tests():
     cases.append(("third of a billion seconds", True, 333333333.3333333, [], [(333333333.3333333, Scale(scale=1.0))],))
     cases.append(("one million half seconds", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
     cases.append(("one million of half seconds", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
-    cases.append(("one half of minutes", False, 0.0, [("of", "UNUSED_MULTIPLIER"), ("minutes", "LONELY_SCALE")], [],))
+    cases.append(("one half of minutes", True, 30.0, [], [(0.5, Scale(scale=60.0))],))
+    cases.append(("one half minutes of", True, 30.0, [("of", "UNUSED_MULTIPLIER")], [(0.5, Scale(scale=60.0))],))
+    cases.append(("the half of a million seconds", True, 500000.0, [], [(500000.0, Scale(1.0, "segundo", "segundos"))],))
+    
     for item in English()._numerals["multiplier"]["terms"]:
         cases.append((f"two {item} six minutes", True, 720.0, [], [(12.0, Scale(scale=60.0))],))
     for item in English()._numerals["multiplier"]["terms"]:
@@ -60,7 +64,7 @@ def generate_notstrict_tests():
     for item in English()._numerals["multiplier"]["terms"]:
         cases.append((f"two {item} 6 minutes", True, 720.0, [], [(12.0, Scale(scale=60.0))],))
     for item in English()._numerals["multiplier"]["terms"]:
-        cases.append((f"2 {item}", False, 0.0, [(f"{item}", "UNUSED_MULTIPLIER")], [],))
+        cases.append((f"2 {item}", False, 0.0, [(f"{item}", "UNUSED_MULTIPLIER"), (2.0, "LONELY_VALUE")], [],))
 
     # Numeral Type Combinations + Float/Numeral Combinations
     cases.append(("FIVE hours, 2 minutes, 3s", True, 18123.0, [], [(5.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0))],))
@@ -117,6 +121,13 @@ def generate_notstrict_tests():
     cases.append(("20 thirty seconds", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("twenty 30 seconds", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
 
+    cases.append(("twenty twenty three seconds", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
+    cases.append(("twenty 20 three seconds", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("twenty 20 3 seconds", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("twenty 20 3", False, 0.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES"), (3.0, "LONELY_VALUE"),], [],))
+    cases.append(("twenty,18 three seconds", True, 3.0, [(20.0, "LONELY_VALUE"), (18.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("twenty 18 three seconds", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (18.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+
     cases.append(("1 minute seconds", True, 60.0, [("seconds", "CONSECUTIVE_SCALES")], [(1.0, Scale(scale=60.0))],))
     cases.append(("minute 1 seconds", True, 1.0, [("minute", "LEADING_SCALE")], [(1.0, Scale(scale=1.0))],))
     return cases
@@ -159,7 +170,9 @@ def generate_strict_tests():
     cases.append(("third of a billion seconds", True, 333333333.3333333, [], [(333333333.3333333, Scale(scale=1.0))],))
     cases.append(("one million half seconds", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
     cases.append(("one million of half seconds", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
-    cases.append(("one half of minutes", False, 0.0, [("of", "UNUSED_MULTIPLIER"), ("minutes", "LONELY_SCALE")], [],))
+    cases.append(("one half of minutes", True, 30.0, [], [(0.5, Scale(scale=60.0))],))
+    cases.append(("one half minutes of", False, 30.0, [("of", "UNUSED_MULTIPLIER")], [(0.5, Scale(scale=60.0))],))
+
     for item in English()._numerals["multiplier"]["terms"]:
         cases.append((f"two {item} six minutes", True, 720.0, [], [(12.0, Scale(scale=60.0))],))
     for item in English()._numerals["multiplier"]["terms"]:
@@ -167,7 +180,7 @@ def generate_strict_tests():
     for item in English()._numerals["multiplier"]["terms"]:
         cases.append((f"two {item} 6 minutes", True, 720.0, [], [(12.0, Scale(scale=60.0))],))
     for item in English()._numerals["multiplier"]["terms"]:
-        cases.append((f"2 {item}", False, 0.0, [(f"{item}", "UNUSED_MULTIPLIER")], [],))
+        cases.append((f"2 {item}", False, 0.0, [(f"{item}", "UNUSED_MULTIPLIER"), (2.0, "LONELY_VALUE")], [],))
 
     # Numeral Type Combinations + Float/Numeral Combinations
     cases.append(("FIVE hours, 2 minutes, 3s", True, 18123.0, [], [(5.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0))],))
@@ -223,6 +236,13 @@ def generate_strict_tests():
     cases.append(("twenty thirty seconds", True, 2030.0, [], [(2030.0, Scale(scale=1.0))],))
     cases.append(("20 thirty seconds", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("twenty 30 seconds", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
+
+    cases.append(("twenty twenty three seconds", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
+    cases.append(("twenty 20 three seconds", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("twenty 20 3 seconds", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("twenty 20 3", False, 0.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES"), (3.0, "LONELY_VALUE"),], [],))
+    cases.append(("twenty,18 three seconds", False, 3.0, [(20.0, "LONELY_VALUE"), (18.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("twenty 18 three seconds", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (18.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
 
     cases.append(("1 minute seconds", False, 60.0, [("seconds", "CONSECUTIVE_SCALES")], [(1.0, Scale(scale=60.0))],))
     cases.append(("minute 1 seconds", False, 1.0, [("minute", "LEADING_SCALE")], [(1.0, Scale(scale=1.0))],))
