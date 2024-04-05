@@ -112,47 +112,47 @@
             "terms": ["veinte", "Veinte", "VEINTE", "veintes", "Veintes", "VEINTES"]
         },
         "twenty-one": {
-            "type": "tens",
+            "type": "digits",
             "value": 21.0,
             "terms": ["veintiuno", "Veintiuno", "VEINTIUNO", "veintiunos", "Veintiunos", "VEINTIUNOS", "veintiuna", "Veintiuna", "VEINTIUNA", "veintiunas", "Veintiunas", "VEINTIUNAS"]
         },
         "twenty-two": {
-            "type": "tens",
+            "type": "digits",
             "value": 22.0,
             "terms": ["veintidos", "Veintidos", "VEINTIDOS", "veintidoses", "Veintidoses", "VEINTIDOSES"]
         },
         "twenty-three": {
-            "type": "tens",
+            "type": "digits",
             "value": 23.0,
             "terms": ["veintitres", "Veintitres", "VEINTITRES", "veintitreses", "Veintitreses", "VEINTITRESES"]
         },
         "twenty-four": {
-            "type": "tens",
+            "type": "digits",
             "value": 24.0,
             "terms": ["veinticuatro", "Veinticuatro", "VEINTICUATRO", "veinticuatros", "Veinticuatros", "VEINTICUATROS"]
         },
         "twenty-five": {
-            "type": "tens",
+            "type": "digits",
             "value": 25.0,
             "terms": ["veinticinco", "Veinticinco", "VEINTICINCO", "veinticincos", "Veinticincos", "VEINTICINCOS"]
         },
         "twenty-six": {
-            "type": "tens",
+            "type": "digits",
             "value": 26.0,
             "terms": ["veintiseis", "Veintiseis", "VEINTISEIS", "veintiseises", "Veintiseises", "VEINTISEISES"]
         },
         "twenty-seven": {
-            "type": "tens",
+            "type": "digits",
             "value": 27.0,
             "terms": ["veintisiete", "Veintisiete", "VEINTISIETE", "veintisietes", "Veintisietes", "VEINTISIETES"]
         },
         "twenty-eight": {
-            "type": "tens",
+            "type": "digits",
             "value": 28.0,
             "terms": ["veintiocho", "Veintiocho", "VEINTIOCHO", "veintiochos", "Veintiochos", "VEINTIOCHOS"]
         },
         "twenty-nine": {
-            "type": "tens",
+            "type": "digits",
             "value": 29.0,
             "terms": ["veintinueve", "Veintinueve", "VEINTINUEVE", "veintinueves", "Veintinueves", "VEINTINUEVES"]
         },

@@ -319,7 +319,7 @@ def parser_one(
         ]:
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
         elif (
-            current_numeral_type in ["tens", "teens"]
+            current_numeral_type in ["tens", "teens", "digits"]
             and previous_numeral_type == "thousands"
         ):
             parsed_value = parsed_value + numeral_value
@@ -332,6 +332,7 @@ def parser_one(
                 result.invalid.append((segment_value, "LONELY_VALUE"))
                 segment_value = None
             result.invalid.append((parsed_value, "CONSECUTIVE_VALUES"))
+            larger_numeral = False
             parsed_value = numeral_value
         else:
             larger_numeral = False

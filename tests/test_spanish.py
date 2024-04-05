@@ -121,7 +121,11 @@ def generate_notstrict_tests():
     cases.append(("20 treinta segundos", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("veinte 30 segundos", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
 
+    cases.append(("veintitrés mil seg", True, 23000.0, [], [(23000.0, Scale(scale=1.0))],))
     cases.append(("dos mil veintitrés seg", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés cinco seg", True, 5.0, [(2023.0, 'CONSECUTIVE_VALUES')], [(5.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés mil cinco seg", True, 2023005.0, [], [(2023005.0, Scale(scale=1.0))],))
+
     cases.append(("veinte veinte tres segundos", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
     cases.append(("veinte 20 tres segundos", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
     cases.append(("veinte 20 3 segundos", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
@@ -240,7 +244,11 @@ def generate_strict_tests():
     cases.append(("20 treinta segundos", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("veinte 30 segundos", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
 
+    cases.append(("veintitrés mil seg", True, 23000.0, [], [(23000.0, Scale(scale=1.0))],))
     cases.append(("dos mil veintitrés seg", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés cinco seg", False, 5.0, [(2023.0, 'CONSECUTIVE_VALUES')], [(5.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés mil cinco seg", True, 2023005.0, [], [(2023005.0, Scale(scale=1.0))],))
+
     cases.append(("veinte veinte tres segundos", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
     cases.append(("veinte 20 tres segundos", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
     cases.append(("veinte 20 3 segundos", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
