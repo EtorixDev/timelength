@@ -1,4 +1,4 @@
-name: Publish releases to PyPI.
+name: Publish releases to PyPI
 
 on:
     release:
@@ -14,7 +14,7 @@ jobs:
               with:
                   python-version: "3.12"
             - name: Install Poetry
-              run: pip install poetry
+              uses: snok/install-poetry@v1
             - name: Build and Publish
               env:
                   POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
