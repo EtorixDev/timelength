@@ -74,14 +74,14 @@ Valid JSONs must include the following keys, even if their contents are empty:
   - Characters/phrases that join two parts of the same segment.
 - `segmentors`
   - Characters/phrases that join two segments together.
-- `allowed_symbols`
-  - Characters that won't be categorized as an invalid input. If sent multiple times in a row (ex: !!), they will still be marked as invalid.
+- `allowed_terms`
+  - Characters or terms that won't be categorized as an invalid input. If sent multiple times in a row (ex: !!), they will still be marked as invalid.
 - `decimal_separators`
   - Characters used to separate decimals from digits. Can't have overlap with `thousand_separators`.
 - `thousand_separators`
   - Characters used to break up large numbers. Can't have overlap with `decimal_separators`.
 - `parser_file`
-  - The name of this locale's parser file located in `timelength/parsers/`, or the path to the parser file if stored elsewhere. 
+  - The name of this locale's parser file (extension included) located in `timelength/parsers/`, or the path to the parser file if stored elsewhere. 
   - **Ensure only a trusted file is used as this could allow unintended code execution.**
   - The internal parser method must share a name with the file.
 - `numerals`

@@ -5,7 +5,9 @@ __pycache__/
 *.pyc
 *.pyo
 .vscode/
-.ruff_cache
-.pytest_cache
-dist
+.ruff_cache/
+.pytest_cache/
+.tox/
+.coverage
+dist/
 test.py

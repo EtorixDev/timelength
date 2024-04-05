@@ -1,0 +1,23 @@
+name: Publish releases to PyPI.
+
+on:
+    release:
+        types: [created]
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - name: Set up Python
+              uses: actions/setup-python@v2
+              with:
+                  python-version: "3.12"
+            - name: Install Poetry
+              run: pip install poetry
+            - name: Build and Publish
+              env:
+                  POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }}
+              run: |
+                  poetry config pypi-token.pypi $POETRY_PYPI_TOKEN_PYPI
+                  poetry publish --build
