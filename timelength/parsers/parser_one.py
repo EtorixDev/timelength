@@ -195,6 +195,7 @@ def parser_one(
     previous_value_type_converted = None
     current_numeral_type = None
     previous_numeral_type = None
+    larger_numeral = False
     starts_with_modifier = False
 
     def handle_multiplier(text: str, index: int):
@@ -263,7 +264,8 @@ def parser_one(
             current_numeral_type, \
             current_value_type_converted, \
             starts_with_modifier, \
-            segment_value
+            segment_value, \
+            larger_numeral
 
         numeral = locale._get_numeral(text)
         numeral_value = (
@@ -302,8 +304,13 @@ def parser_one(
         elif current_numeral_type in ["modifiers", "thousands"]:
             parsed_value *= numeral_value
         elif current_numeral_type == "digits" and previous_numeral_type == "tens":
+            larger_numeral = True
             parsed_value = parsed_value + numeral_value
-        elif current_numeral_type == "digits" and previous_numeral_type == "digits":
+        elif (
+            current_numeral_type == "digits"
+            and previous_numeral_type == "digits"
+            and not larger_numeral
+        ):
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
         elif current_numeral_type in ["teens", "tens"] and previous_numeral_type in [
             "digits",
@@ -311,6 +318,12 @@ def parser_one(
             "tens",
         ]:
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
+        elif (
+            current_numeral_type in ["tens", "teens"]
+            and previous_numeral_type == "thousands"
+        ):
+            parsed_value = parsed_value + numeral_value
+            larger_numeral = True
         elif (
             previous_value_type_converted == BufferType.NUMBER
             or previous_numeral_type == "modifiers"
@@ -321,6 +334,7 @@ def parser_one(
             result.invalid.append((parsed_value, "CONSECUTIVE_VALUES"))
             parsed_value = numeral_value
         else:
+            larger_numeral = False
             parsed_value = numeral_value
 
     def handle_scale(text: str):

@@ -121,6 +121,14 @@ def generate_notstrict_tests():
     cases.append(("20 treinta segundos", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("veinte 30 segundos", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
 
+    cases.append(("dos mil veintitrés seg", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
+    cases.append(("veinte veinte tres segundos", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
+    cases.append(("veinte 20 tres segundos", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("veinte 20 3 segundos", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("veinte 20 3", False, 0.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES"), (3.0, "LONELY_VALUE")], [],))
+    cases.append(("veinte,18 tres segundos", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (0.18, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("veinte 18 tres segundos", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (18.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+
     cases.append(("1 minuto segundos", True, 60.0, [("segundos", "CONSECUTIVE_SCALES")], [(1.0, Scale(scale=60.0))],))
     cases.append(("minuto 1 segundos", True, 1.0, [("minuto", "LEADING_SCALE")], [(1.0, Scale(scale=1.0))],))
     return cases
@@ -231,6 +239,14 @@ def generate_strict_tests():
     cases.append(("veinte treinta segundos", True, 2030.0, [], [(2030.0, Scale(scale=1.0))],))
     cases.append(("20 treinta segundos", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("veinte 30 segundos", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
+
+    cases.append(("dos mil veintitrés seg", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
+    cases.append(("veinte veinte tres segundos", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
+    cases.append(("veinte 20 tres segundos", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("veinte 20 3 segundos", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("veinte 20 3", False, 0.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES"), (3.0, "LONELY_VALUE")], [],))
+    cases.append(("veinte,18 tres segundos", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (0.18, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
+    cases.append(("veinte 18 tres segundos", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (18.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
 
     cases.append(("1 minuto segundos", False, 60.0, [("segundos", "CONSECUTIVE_SCALES")], [(1.0, Scale(scale=60.0))],))
     cases.append(("minuto 1 segundos", False, 1.0, [("minuto", "LEADING_SCALE")], [(1.0, Scale(scale=1.0))],))

@@ -121,7 +121,8 @@ def generate_notstrict_tests():
     cases.append(("20 thirty seconds", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("twenty 30 seconds", True, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
 
-    cases.append(("twenty twenty three seconds", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
+    cases.append(("two thousand twenty-three sec", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
+    cases.append(("twenty twenty three seconds", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
     cases.append(("twenty 20 three seconds", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
     cases.append(("twenty 20 3 seconds", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
     cases.append(("twenty 20 3", False, 0.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES"), (3.0, "LONELY_VALUE"),], [],))
@@ -163,6 +164,7 @@ def generate_strict_tests():
     cases.append(("zero", False, 0.0, [(0.0, "LONELY_VALUE")], [],))
     cases.append(("zero minutes", True, 0.0, [], [(0.0, Scale(scale=60.0))],))
     cases.append(("five", False, 0.0, [(5.0, "LONELY_VALUE")], [],))
+
     cases.append(("twenty-two sec", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
     cases.append(("thousand seconds", True, 1000.0, [], [(1000.0, Scale(scale=1.0))],))
     cases.append(("a million seconds", True, 1000000.0, [], [(1000000.0, Scale(scale=1.0))],))
@@ -172,6 +174,7 @@ def generate_strict_tests():
     cases.append(("one million of half seconds", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
     cases.append(("one half of minutes", True, 30.0, [], [(0.5, Scale(scale=60.0))],))
     cases.append(("one half minutes of", False, 30.0, [("of", "UNUSED_MULTIPLIER")], [(0.5, Scale(scale=60.0))],))
+    cases.append(("the half of a million seconds", True, 500000.0, [], [(500000.0, Scale(1.0, "segundo", "segundos"))],))
 
     for item in English()._numerals["multiplier"]["terms"]:
         cases.append((f"two {item} six minutes", True, 720.0, [], [(12.0, Scale(scale=60.0))],))
@@ -237,6 +240,7 @@ def generate_strict_tests():
     cases.append(("20 thirty seconds", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
     cases.append(("twenty 30 seconds", False, 30.0, [(20.0, "CONSECUTIVE_VALUES")], [(30.0, Scale(scale=1.0))],))
 
+    cases.append(("two thousand twenty-three sec", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
     cases.append(("twenty twenty three seconds", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
     cases.append(("twenty 20 three seconds", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
     cases.append(("twenty 20 3 seconds", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
