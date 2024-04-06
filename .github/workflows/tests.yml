@@ -1,4 +1,4 @@
-name: Use pytest with tox
+name: Tests
 
 on:
     push:
@@ -26,6 +26,6 @@ jobs:
             - name: Install dependencies with Poetry
               shell: bash
               run: poetry install
-            - name: Run tox
+            - name: Run pytest
               shell: bash
-              run: poetry run tox
+              run: poetry run pytest --cov
