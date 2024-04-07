@@ -54,7 +54,7 @@ print(output.result.success)
 print(output.result.invalid)
 # [(19.0, "LONELY_VALUE")]
 print(output.result.valid)
-# [(3.5, Scale(scale=86400.0, "day", "days")), (35.0, Scale(scale=60.0, "minute", "minutes"))]
+# [(3.5, Scale(86400.0, "day", "days")), (35.0, Scale(60.0, "minute", "minutes"))]
 ```
 Additionally, unlike with the default behavior, scales must be present. No assumptions will be made.
 
