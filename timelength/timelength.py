@@ -34,8 +34,8 @@ class TimeLength:
 
     ```python
     time_length = TimeLength("2 hours 30 minutes")
-    if time_length.success:
-        print(f"Total seconds: {time_length.total_seconds}")
+    if time_length.result.success:
+        print(f"Total Seconds: {time_length.to_seconds()}")
     ```
     """
 
