@@ -17,17 +17,17 @@ While `TimeLength.strict` is `False` (default), `TimeLength.result.success` will
 ```python
 from timelength import TimeLength
 
-output = TimeLength("1d5h25m and 23miles")
+output = TimeLength("1d5h25m15.5s and 23miles")
 print(output.result.success)
 # True
 print(output.result.seconds)
-# 105900.0
+# 105915.5
 print(output.to_minutes(max_precision = 3))
-# 1765.0
+# 1765.258
 print(output.result.invalid)
 # [('miles', 'UNKNOWN_TERM'), (23.0, 'LONELY_VALUE')]
 print(output.result.valid)
-# [(1.0, Scale(86400.0, "day", "days")), (5.0, Scale(3600.0, "hour", "hours")), (25.0, Scale(60.0, "minute", "minutes"))]
+# [(1.0, Scale(86400.0, "day", "days")), (5.0, Scale(3600.0, "hour", "hours")), (25.0, Scale(60.0, "minute", "minutes")), (15.5, Scale(1.0, "second", "seconds"))]
 ```
 Additionally, if a single lone value is parsed without a paired scale, seconds will be assumed. However, if more than one value is parsed, nothing will be assumed.
 ```python
@@ -61,8 +61,8 @@ Additionally, unlike with the default behavior, scales must be present. No assum
 ## Supported Locales
 1. English
 2. Spanish
-3. Custom (Copy & modify an existing config with new terms as long as your new `Locale` follows the existing config parser's grammar structure)
-4. Custom (Write your own parsing logic if your `Locale`'s grammar structure differs too drastically) (PRs welcome)
+3. Basic Custom (Copy & modify an existing config with new terms as long as your new `Locale` follows the existing config parser's grammar structure)
+4. Advanced Custom (Write your own parsing logic if your `Locale`'s grammar structure differs too drastically) (PRs welcome)
 
 ## Customization
 `timelength` allows for customizing the parsing behavior through JSON configuration. To get started, copy an existing locale JSON in `timelength/locales/`. The custom JSON may be placed anywhere.
@@ -103,7 +103,7 @@ Valid JSONs must include the following keys, even if their contents are empty:
     - terms
       - All terms that could be parsed as this scale. Accents and other NFKD markings should not be present as they are filtered from the user input.
 - `extra_data`
-  - Any data a parser needs that is not already covered. May be populated or left empty. The locale loads this into a `Locale._extra_data` attribute, leaving the parser to utilizes it.
+  - Any data a parser needs that is not already covered. May be populated or left empty. The locale loads this into a `Locale._extra_data` attribute, leaving the parser to utilize it.
 
 Once your custom JSON is filled out, you can use it as follows:
 ```python
