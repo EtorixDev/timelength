@@ -7,232 +7,232 @@
     "parser_file": "parser_one.py",
     "numerals": {
         "zero": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 0.0,
             "terms": ["cero", "Cero", "CERO", "ceros", "Ceros", "CEROS"]
         },
         "one": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 1.0,
             "terms": ["uno", "Uno", "UNO", "unos", "Unos", "UNOS", "un", "Un", "UN", "uns", "Uns", "UNS", "una", "Una", "UNA", "unas", "Unas", "UNAS"]
         },
         "two": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 2.0,
             "terms": ["dos", "Dos", "DOS", "doses", "Doses", "DOSES"]
         },
         "three": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 3.0,
             "terms": ["tres", "Tres", "TRES", "treses", "Treses", "TRESES"]
         },
         "four": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 4.0,
             "terms": ["cuatro", "Cuatro", "CUATRO", "cuatros", "Cuatros", "CUATROS"]
         },
         "five": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 5.0,
             "terms": ["cinco", "Cinco", "CINCO", "cincos", "Cincos", "CINCOS"]
         },
         "six": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 6.0,
             "terms": ["seis", "Seis", "SEIS", "seises", "Seises", "SEISES"]
         },
         "seven": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 7.0,
             "terms": ["siete", "Siete", "SIETE", "sietes", "Sietes", "SIETES"]
         },
         "eight": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 8.0,
             "terms": ["ocho", "Ocho", "OCHO", "ochos", "Ochos", "OCHOS"]
         },
         "nine": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 9.0,
             "terms": ["nueve", "Nueve", "NUEVE", "nueves", "Nueves", "NUEVES"]
         },
         "ten": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 10.0,
             "terms": ["diez", "Diez", "DIEZ", "dies", "Dies", "DIES", "diec", "Diec", "DIEC", "diezes", "Diezes", "DIEZES", "dieses", "Dieses", "DIESES", "dieces", "Dieces", "DIECES"]
         },
         "eleven": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 11.0,
             "terms": ["once", "Once", "ONCE", "onces", "Onces", "ONCES"]
         },
         "twelve": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 12.0,
             "terms": ["doce", "Doce", "DOCE", "doces", "Doces", "DOCES"]
         },
         "thirteen": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 13.0,
             "terms": ["trece", "Trece", "TRECE", "treces", "Treces", "TRECES"]
         },
         "fourteen": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 14.0,
             "terms": ["catorce", "Catorce", "CATORCE", "catorces", "Catorces", "CATORCES"]
         },
         "fifteen": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 15.0,
             "terms": ["quince", "Quince", "QUINCE", "quinces", "Quinces", "QUINCES"]
         },
         "sixteen": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 16.0,
             "terms": ["dieciseis", "Dieciseis", "DIECISEIS", "dieciseises", "Dieciseises", "DIECISEISES"]
         },
         "seventeen": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 17.0,
             "terms": ["diecisiete", "Diecisiete", "DIECISIETE", "diecisietes", "Diecisietes", "DIECISIETES"]
         },
         "eighteen": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 18.0,
             "terms": ["dieciocho", "Dieciocho", "DIECIOCHO", "dieciochos", "Dieciochos", "DIECIOCHOS"]
         },
         "nineteen": {
-            "type": "teens",
+            "type": "TEEN",
             "value": 19.0,
             "terms": ["diecinueve", "Diecinueve", "DIECINUEVE", "diecinueves", "Diecinueves", "DIECINUEVES"]
         },
         "twenty": {
-            "type": "tens",
+            "type": "TEN",
             "value": 20.0,
             "terms": ["veinte", "Veinte", "VEINTE", "veintes", "Veintes", "VEINTES"]
         },
         "twenty-one": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 21.0,
             "terms": ["veintiuno", "Veintiuno", "VEINTIUNO", "veintiunos", "Veintiunos", "VEINTIUNOS", "veintiuna", "Veintiuna", "VEINTIUNA", "veintiunas", "Veintiunas", "VEINTIUNAS"]
         },
         "twenty-two": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 22.0,
             "terms": ["veintidos", "Veintidos", "VEINTIDOS", "veintidoses", "Veintidoses", "VEINTIDOSES"]
         },
         "twenty-three": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 23.0,
             "terms": ["veintitres", "Veintitres", "VEINTITRES", "veintitreses", "Veintitreses", "VEINTITRESES"]
         },
         "twenty-four": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 24.0,
             "terms": ["veinticuatro", "Veinticuatro", "VEINTICUATRO", "veinticuatros", "Veinticuatros", "VEINTICUATROS"]
         },
         "twenty-five": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 25.0,
             "terms": ["veinticinco", "Veinticinco", "VEINTICINCO", "veinticincos", "Veinticincos", "VEINTICINCOS"]
         },
         "twenty-six": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 26.0,
             "terms": ["veintiseis", "Veintiseis", "VEINTISEIS", "veintiseises", "Veintiseises", "VEINTISEISES"]
         },
         "twenty-seven": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 27.0,
             "terms": ["veintisiete", "Veintisiete", "VEINTISIETE", "veintisietes", "Veintisietes", "VEINTISIETES"]
         },
         "twenty-eight": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 28.0,
             "terms": ["veintiocho", "Veintiocho", "VEINTIOCHO", "veintiochos", "Veintiochos", "VEINTIOCHOS"]
         },
         "twenty-nine": {
-            "type": "digits",
+            "type": "DIGIT",
             "value": 29.0,
             "terms": ["veintinueve", "Veintinueve", "VEINTINUEVE", "veintinueves", "Veintinueves", "VEINTINUEVES"]
         },
         "thirty": {
-            "type": "tens",
+            "type": "TEN",
             "value": 30.0,
             "terms": ["treinta", "Treinta", "TREINTA", "treintas", "Treintas", "TREINTAS"]
         },
         "forty": {
-            "type": "tens",
+            "type": "TEN",
             "value": 40.0,
             "terms": ["cuarenta", "Cuarenta", "CUARENTA", "cuarentas", "Cuarentas", "CUARENTAS"]
         },
         "fifty": {
-            "type": "tens",
+            "type": "TEN",
             "value": 50.0,
             "terms": ["cincuenta", "Cincuenta", "CINCUENTA", "cincuentas", "Cincuentas", "CINCUENTAS"]
         },
         "sixty": {
-            "type": "tens",
+            "type": "TEN",
             "value": 60.0,
             "terms": ["sesenta", "Sesenta", "SESENTA", "sesentas", "Sesentas", "SESENTAS"]
         },
         "seventy": {
-            "type": "tens",
+            "type": "TEN",
             "value": 70.0,
             "terms": ["setenta", "Setenta", "SETENTA", "setentas", "Setentas", "SETENTAS"]
         },
         "eighty": {
-            "type": "tens",
+            "type": "TEN",
             "value": 80.0,
             "terms": ["ochenta", "Ochenta", "OCHENTA", "ochentas", "Ochentas", "OCHENTAS"]
         },
         "ninety": {
-            "type": "tens",
+            "type": "TEN",
             "value": 90.0,
             "terms": ["noventa", "Noventa", "NOVENTA", "noventas", "Noventas", "NOVENTAS"]
         },
         "hundred": {
-            "type": "thousands",
+            "type": "THOUSAND",
             "value": 100.0,
             "terms": ["cien", "Cien", "CIEN", "ciens", "Ciens", "CIENS", "cienes", "Cienes", "CIENES", "cientos", "Cientos", "CIENTOS"]
         },
         "thousand": {
-            "type": "thousands",
+            "type": "THOUSAND",
             "value": 1000.0,
             "terms": ["mil", "Mil", "MIL", "mils", "Mils", "MILS", "miles", "Miles", "MILES"]
         },
         "million": {
-            "type": "thousands",
+            "type": "THOUSAND",
             "value": 1000000.0,
             "terms": ["millon", "Millon", "MILLON", "millons", "Millons", "MILLONS", "millones", "Millones", "MILLONES"]
         },
         "trillion": {
-            "type": "thousands",
+            "type": "THOUSAND",
             "value": 1000000000000.0,
             "terms": ["billon", "Billon", "BILLON", "billons", "Billons", "BILLONS", "billones", "Billones", "BILLONES"]
         },
         "full": {
-            "type": "modifiers",
+            "type": "MODIFIER",
             "value": 1.0,
             "terms": ["completo", "Completo", "COMPLETO", "completos", "Completos", "COMPLETOS", "completa", "Completa", "COMPLETA", "completas", "Completas", "COMPLETAS", "total", "Total", "TOTAL", "totales", "Totales", "TOTALES", "lleno", "Lleno", "LLENO", "llenos", "Llenos", "LLENOS", "llena", "Llena", "LLENA", "llenas", "Llenas", "LLENAS", "entero", "Entero", "ENTERO", "enteros", "Enteros", "ENTEROS", "entera", "Entera", "ENTERA", "enteras", "Enteras", "ENTERAS", "todo", "Todo", "TODO", "todos", "Todos", "TODOS", "toda", "Toda", "TODA", "todas", "Todas", "TODAS"]
         },
         "half": {
-            "type": "modifiers",
+            "type": "MODIFIER",
             "value": 0.5,
             "terms": ["medio", "Medio", "MEDIO", "medios", "Medios", "MEDIOS", "media", "Media", "MEDIA", "medias", "Medias", "MEDIAS", "mitad", "Mitad", "MITAD", "mitads", "Mitads", "MITADS"]
         },
         "third": {
-            "type": "modifiers",
+            "type": "MODIFIER",
             "value": "1/3",
             "terms": ["tercio", "Tercio", "TERCIO", "tercios", "Tercios", "TERCIOS", "tercero", "Tercero", "TERCERO", "terceros", "Terceros", "TERCEROS", "tercera", "Tercera", "TERCERA", "terceras", "Terceras", "TERCERAS"]
         },
         "quarter": {
-            "type": "modifiers",
+            "type": "MODIFIER",
             "value": 0.25,
             "terms": ["cuarto", "Cuarto", "CUARTO", "cuartos", "Cuartos", "CUARTOS"]
         },
         "multiplier": {
-            "type": "multiplier",
+            "type": "MULTIPLIER",
             "value": -1.0,
             "terms": ["de", "De", "DE"]
         }

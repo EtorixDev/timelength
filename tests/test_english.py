@@ -46,6 +46,10 @@ def generate_notstrict_tests():
     cases.append(("zero minutes", True, 0.0, [], [(0.0, Scale(scale=60.0))],))
     cases.append(("five", True, 5.0, [], [(5.0, Scale(scale=1.0))],))
     
+    cases.append(("one thousand", True, 1000.0, [], [],))
+    cases.append(("one thousand and five", True, 1005.0, [], [],))
+    cases.append(("one thousand seconds and five", True, 1000.0, [(5.0, "LONELY_VALUE")], [],))
+
     cases.append(("twenty-two sec", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
     cases.append(("thousand seconds", True, 1000.0, [], [(1000.0, Scale(scale=1.0))],))
     cases.append(("a million seconds", True, 1000000.0, [], [(1000000.0, Scale(scale=1.0))],))
@@ -168,6 +172,10 @@ def generate_strict_tests():
     cases.append(("zero", False, 0.0, [(0.0, "LONELY_VALUE")], [],))
     cases.append(("zero minutes", True, 0.0, [], [(0.0, Scale(scale=60.0))],))
     cases.append(("five", False, 0.0, [(5.0, "LONELY_VALUE")], [],))
+    
+    cases.append(("one thousand", False, 0.0, [(1000.0, "LONELY_VALUE")], [],))
+    cases.append(("one thousand and five", False, 0, [(1005.0, "LONELY_VALUE")], [],))
+    cases.append(("one thousand seconds and five", False, 1000.0, [(5.0, "LONELY_VALUE")], [],))
 
     cases.append(("twenty-two sec", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
     cases.append(("thousand seconds", True, 1000.0, [], [(1000.0, Scale(scale=1.0))],))

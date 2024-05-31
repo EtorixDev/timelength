@@ -46,7 +46,11 @@ def generate_notstrict_tests():
     cases.append(("cero minutos", True, 0.0, [], [(0.0, Scale(scale=60.0))],))
     cases.append(("cinco", True, 5.0, [], [(5.0, Scale(scale=1.0))],))
     
-    cases.append(("veintidós seg", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
+    cases.append(("un mil", True, 1000.0, [], [],))
+    cases.append(("un mil y cinco", True, 1005.0, [], [],))
+    cases.append(("un mil segundos y cinco", True, 1000.0, [(5.0, "LONELY_VALUE")], [],))
+    
+    cases.append(("veintidos seg", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
     cases.append(("mil segundos", True, 1000.0, [], [(1000.0, Scale(scale=1.0))],))
     cases.append(("un millon segundos", True, 1000000.0, [], [(1000000.0, Scale(scale=1.0))],))
     cases.append(("medio millon segundos", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
@@ -55,7 +59,7 @@ def generate_notstrict_tests():
     cases.append(("un millon de medio segundos", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
     cases.append(("una mitad de minutos", True, 30.0, [], [(0.5, Scale(scale=60.0))],))
     cases.append(("una mitad minutos de ", True, 30.0, [("de", "UNUSED_MULTIPLIER")], [(0.5, Scale(scale=60.0))],))
-    cases.append(("la mitad de un millón seg", True, 500000.0, [], [(500000.0, Scale(1.0, "segundo", "segundos"))],))
+    cases.append(("la mitad de un millon seg", True, 500000.0, [], [(500000.0, Scale(1.0, "segundo", "segundos"))],))
     
     for item in Spanish()._numerals["multiplier"]["terms"]:
         cases.append((f"dos {item} seis minutos", True, 720.0, [], [(12.0, Scale(scale=60.0))],))
@@ -169,7 +173,11 @@ def generate_strict_tests():
     cases.append(("cero minutos", True, 0.0, [], [(0.0, Scale(scale=60.0))],))
     cases.append(("cinco", False, 0.0, [(5.0, "LONELY_VALUE")], [],))
 
-    cases.append(("veintidós seg", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
+    cases.append(("un mil", False, 0.0, [(1000.0, "LONELY_VALUE")], [],))
+    cases.append(("un mil y cinco", False, 0, [(1005.0, "LONELY_VALUE")], [],))
+    cases.append(("un mil segundos y cinco", False, 1000.0, [(5.0, "LONELY_VALUE")], [],))
+
+    cases.append(("veintidos seg", True, 22.0, [], [(22.0, Scale(scale=1.0))],))
     cases.append(("mil segundos", True, 1000.0, [], [(1000.0, Scale(scale=1.0))],))
     cases.append(("un millon segundos", True, 1000000.0, [], [(1000000.0, Scale(scale=1.0))],))
     cases.append(("medio millon segundos", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
@@ -178,7 +186,7 @@ def generate_strict_tests():
     cases.append(("un millon de medio segundos", True, 500000.0, [], [(500000.0, Scale(scale=1.0))],))
     cases.append(("una mitad de minutos", True, 30.0, [], [(0.5, Scale(scale=60.0))],))
     cases.append(("una mitad minutos de ", False, 30.0, [("de", "UNUSED_MULTIPLIER")], [(0.5, Scale(scale=60.0))],))
-    cases.append(("la mitad de un millón seg", True, 500000.0, [], [(500000.0, Scale(1.0, "segundo", "segundos"))],))
+    cases.append(("la mitad de un millon seg", True, 500000.0, [], [(500000.0, Scale(1.0, "segundo", "segundos"))],))
 
     for item in Spanish()._numerals["multiplier"]["terms"]:
         cases.append((f"dos {item} seis minutos", True, 720.0, [], [(12.0, Scale(scale=60.0))],))

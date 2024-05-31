@@ -33,3 +33,24 @@ class BufferType(Enum):
     NUMERAL = "NUMERAL"
     SPECIAL = "SPECIAL"
     UNKNOWN = "UNKNOWN"
+
+
+class NumeralType(Enum):
+    """
+    Enumerates the types of numerals recognized during parsing.
+    
+    ### Members
+    - `DIGIT`: Represents digit numerals (ex: one).
+    - `TEEN`: Represents teen numerals (ex: eleven).
+    - `TEN`: Represents ten numerals (ex: twenty).
+    - `THOUSAND`: Represents thousand numerals (ex: thousand).
+    - `MODIFIER`: Represents modifier numerals (ex: half).
+    - `MULTIPLIER`: Represents multipliers numerals (ex: of).
+    """
+
+    DIGIT = "DIGIT"
+    TEEN = "TEEN"
+    TEN = "TEN"
+    THOUSAND = "THOUSAND"
+    MODIFIER = "MODIFIER"
+    MULTIPLIER = "MULTIPLIER"

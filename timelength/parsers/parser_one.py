@@ -1,7 +1,7 @@
 from fractions import Fraction
 
 from timelength.dataclasses import ParsedTimeLength, Scale
-from timelength.enums import BufferType, CharacterType
+from timelength.enums import BufferType, CharacterType, NumeralType
 from timelength.locales import Locale
 from timelength.utils import buffer_type, character_type, remove_diacritics
 
@@ -37,10 +37,16 @@ def parser_one(
                 ],
                 locale._connectors + locale._segmentors + locale._allowed_terms,
             )
+            
+            numeral_type = None
+            if buffer_alphanum is BufferType.NUMERAL:
+                numeral_type = NumeralType(locale._get_numeral(buffer)["type"])
+            
             buffer_values.append(
                 (
-                    float(buffer) if buffer_alphanum == BufferType.NUMBER else buffer,
+                    float(buffer) if buffer_alphanum is BufferType.NUMBER else buffer,
                     buffer_alphanum,
+                    numeral_type,
                 )
             )
             buffer = ""
@@ -174,7 +180,7 @@ def parser_one(
             continue
         if not item:
             continue
-        if item[1] == BufferType.UNKNOWN:
+        if item[1] is BufferType.UNKNOWN:
             result.invalid.append((item[0], "UNKNOWN_TERM"))
             if (
                 index + 1 < len(buffer_values)
@@ -207,34 +213,35 @@ def parser_one(
         next_value = 0.0
         if (index - 2) >= 0:
             previous_type = potential_values[index - 2][1]
-            if previous_type == BufferType.NUMERAL:
+            if previous_type is BufferType.NUMERAL:
                 previous_numeric = True
                 previous_value = locale._get_numeral(potential_values[index - 2][0])[
                     "value"
                 ]
                 if isinstance(previous_value, str):
                     previous_value = float(Fraction(previous_value))
-            elif previous_type == BufferType.NUMBER:
+            elif previous_type is BufferType.NUMBER:
                 previous_numeric = True
                 previous_value = potential_values[index - 2][0]
         if (index + 2) < len(potential_values):
             next_type = potential_values[index + 2][1]
-            if next_type == BufferType.NUMERAL:
+            if next_type is BufferType.NUMERAL:
                 next_numeric = True
                 next_value = locale._get_numeral(potential_values[index + 2][0])[
                     "value"
                 ]
                 if isinstance(next_value, str):
                     next_value = float(Fraction(next_value))
-            elif next_type == BufferType.NUMBER:
+            elif next_type is BufferType.NUMBER:
                 next_numeric = True
                 next_value = potential_values[index + 2][0]
-            elif next_type == BufferType.SCALE:
+            elif next_type is BufferType.SCALE:
                 next_term = True
         if previous_numeric and next_numeric:
             potential_values[index + 2] = (
                 previous_value * next_value,
                 BufferType.NUMBER,
+                potential_values[index + 2][2],
             )
         else:
             if (not previous_numeric and not next_numeric) or not next_term:
@@ -249,7 +256,7 @@ def parser_one(
         nonlocal parsed_value, segment_value
 
         if (
-            previous_value_type_converted == BufferType.NUMBER
+            previous_value_type_converted is BufferType.NUMBER
             and not starts_with_modifier
         ):
             if segment_value:
@@ -273,61 +280,63 @@ def parser_one(
             if isinstance(numeral["value"], str)
             else float(numeral["value"])
         )
-        current_numeral_type = numeral["type"]
+        current_numeral_type = NumeralType(numeral["type"])
         current_value_type_converted = BufferType.NUMBER
 
         if parsed_value is None:
             parsed_value = 0.0
             if (
-                current_numeral_type == "modifiers"
+                current_numeral_type is NumeralType.MODIFIER
                 and index + 2 < len(potential_values)
                 and potential_values[index + 2][1]
                 in [BufferType.NUMBER, BufferType.NUMERAL]
             ):
-                if potential_values[index + 2][1] == BufferType.NUMERAL:
-                    numeral = locale._get_numeral(potential_values[index + 2][0])
-                    if numeral["type"] == "multiplier":
+                if potential_values[index + 2][1] is BufferType.NUMERAL:
+                    next_numeral = locale._get_numeral(potential_values[index + 2][0])
+                    if NumeralType(next_numeral["type"]) is NumeralType.MULTIPLIER:
                         parsed_value = numeral_value
                     else:
                         potential_values[index + 2] = (
-                            numeral["value"] * numeral_value,
+                            next_numeral["value"] * numeral_value,
                             BufferType.NUMBER,
+                            potential_values[index + 2][2],
                         )
                 else:
                     potential_values[index + 2] = (
                         potential_values[index + 2][0] * numeral_value,
                         BufferType.NUMBER,
+                        potential_values[index + 2][2],
                     )
                 starts_with_modifier = True
             else:
                 parsed_value = numeral_value
-        elif current_numeral_type in ["modifiers", "thousands"]:
+        elif current_numeral_type in [NumeralType.MODIFIER, NumeralType.THOUSAND]:
             parsed_value *= numeral_value
-        elif current_numeral_type == "digits" and previous_numeral_type == "tens":
+        elif current_numeral_type is NumeralType.DIGIT and previous_numeral_type is NumeralType.TEN:
             larger_numeral = True
             parsed_value = parsed_value + numeral_value
         elif (
-            current_numeral_type == "digits"
-            and previous_numeral_type == "digits"
+            current_numeral_type is NumeralType.DIGIT
+            and previous_numeral_type is NumeralType.DIGIT
             and not larger_numeral
         ):
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
-        elif current_numeral_type in ["teens", "tens"] and previous_numeral_type in [
-            "digits",
-            "teens",
-            "tens",
+        elif current_numeral_type in [NumeralType.TEEN, NumeralType.TEN] and previous_numeral_type in [
+            NumeralType.DIGIT,
+            NumeralType.TEEN,
+            NumeralType.TEN,
         ]:
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
         elif (
-            current_numeral_type in ["tens", "teens", "digits"]
-            and previous_numeral_type == "thousands"
+            current_numeral_type in [NumeralType.TEN, NumeralType.TEEN, NumeralType.DIGIT]
+            and previous_numeral_type is NumeralType.THOUSAND
         ):
             parsed_value = parsed_value + numeral_value
             larger_numeral = True
         elif (
-            previous_value_type_converted == BufferType.NUMBER
-            or previous_numeral_type == "modifiers"
-        ) and current_numeral_type not in ["thousands", "modifiers"]:
+            previous_value_type_converted is BufferType.NUMBER
+            or previous_numeral_type is NumeralType.MODIFIER
+        ) and current_numeral_type not in [NumeralType.THOUSAND, NumeralType.MODIFIER]:
             if segment_value:
                 result.invalid.append((segment_value, "LONELY_VALUE"))
                 segment_value = None
@@ -343,7 +352,7 @@ def parser_one(
 
         if index == 0:
             result.invalid.append((text, "LEADING_SCALE"))
-        elif previous_value_type == BufferType.SCALE:
+        elif previous_value_type is BufferType.SCALE:
             result.invalid.append((text, "CONSECUTIVE_SCALES"))
         elif parsed_value is None and segment_value is None:
             result.invalid.append((text, "LONELY_SCALE"))
@@ -363,32 +372,32 @@ def parser_one(
         current_value = element[0]
         current_value_type = element[1]
         current_value_type_converted = current_value_type
+        current_numeral_type = element[2]
 
-        multiplier = False
-        if current_value_type == BufferType.NUMERAL:
-            multiplier = locale._get_numeral(current_value)
-            multiplier = True if multiplier["type"] == "multiplier" else False
-        if multiplier:
-            if parsed_value is not None:
-                handle_multiplier(current_value, index)
+        if current_value_type is BufferType.NUMERAL:
+            if current_numeral_type is NumeralType.MULTIPLIER:
+                if parsed_value is not None:
+                    handle_multiplier(current_value, index)
+                else:
+                    result.invalid.append((current_value, "UNUSED_MULTIPLIER"))
+                    segment_value = None
+                    parsed_value = None
+                    handle_special(current_value)
             else:
-                result.invalid.append((current_value, "UNUSED_MULTIPLIER"))
-                segment_value = None
-                parsed_value = None
-                handle_special(current_value)
-        elif current_value_type == BufferType.SPECIAL:
+                handle_numeral(current_value, index)
+        elif current_value_type is BufferType.SPECIAL:
             handle_special(current_value)
-        elif current_value_type == BufferType.NUMBER:
+        elif current_value_type is BufferType.NUMBER:
             handle_float(current_value)
-        elif current_value_type == BufferType.NUMERAL:
-            handle_numeral(current_value, index)
-        elif current_value_type == BufferType.SCALE:
+        elif current_value_type is BufferType.SCALE:
             handle_scale(current_value)
 
         if (
             current_value_type != BufferType.SPECIAL
             or current_value in locale._segmentors
         ):
+            # if previous_numeral_type is NumeralType.THOUSAND:
+            #     ...
             previous_value_type = current_value_type
             previous_numeral_type = current_numeral_type
             previous_value_type_converted = current_value_type_converted
@@ -427,7 +436,7 @@ def parser_one(
         if not segment_value:
             segment_value = 0.0
         selected_value = parsed_value + segment_value
-        if not strict and len(potential_values) == 1:
+        if not strict and (len(potential_values) == 1 or (len(result.valid) == 0 and len(result.invalid) == 0)):
             result.valid.append((parsed_value + segment_value, locale._second))
             result.seconds += parsed_value + segment_value
         else:
