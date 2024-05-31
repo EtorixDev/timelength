@@ -42,6 +42,10 @@ class Locale:
             raise LocaleConfigError(
                 "Connectors and Segmentors may not have overlap in config."
             )
+        if not self._connectors or not self._segmentors:
+            raise LocaleConfigError(
+                "Connectors and Segmentors must have at least one value in config."
+            )
 
         # _allowed_terms may appear ONCE in a row in the input while strict is enabled.
         self._allowed_terms = self._get_config_or_raise("allowed_terms")
