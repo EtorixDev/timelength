@@ -37,11 +37,11 @@ def parser_one(
                 ],
                 locale._connectors + locale._segmentors + locale._allowed_terms,
             )
-            
+
             numeral_type = None
             if buffer_alphanum is BufferType.NUMERAL:
                 numeral_type = NumeralType(locale._get_numeral(buffer)["type"])
-            
+
             buffer_values.append(
                 (
                     float(buffer) if buffer_alphanum is BufferType.NUMBER else buffer,
@@ -49,6 +49,7 @@ def parser_one(
                     numeral_type,
                 )
             )
+
             buffer = ""
 
     def check_next(
@@ -203,6 +204,8 @@ def parser_one(
     previous_numeral_type = None
     larger_numeral = False
     starts_with_modifier = False
+    skip_potential = 0
+    numeral_segment_tier = None
 
     def handle_multiplier(text: str, index: int):
         nonlocal parsed_value, segment_value
@@ -272,7 +275,9 @@ def parser_one(
             current_value_type_converted, \
             starts_with_modifier, \
             segment_value, \
-            larger_numeral
+            larger_numeral, \
+            skip_potential, \
+            numeral_segment_tier
 
         numeral = locale._get_numeral(text)
         numeral_value = (
@@ -280,7 +285,6 @@ def parser_one(
             if isinstance(numeral["value"], str)
             else float(numeral["value"])
         )
-        current_numeral_type = NumeralType(numeral["type"])
         current_value_type_converted = BufferType.NUMBER
 
         if parsed_value is None:
@@ -310,9 +314,88 @@ def parser_one(
                 starts_with_modifier = True
             else:
                 parsed_value = numeral_value
-        elif current_numeral_type in [NumeralType.MODIFIER, NumeralType.THOUSAND]:
-            parsed_value *= numeral_value
-        elif current_numeral_type is NumeralType.DIGIT and previous_numeral_type is NumeralType.TEN:
+        elif current_numeral_type == previous_numeral_type and segment_value:
+            segment_value += parsed_value
+            result.invalid.append((segment_value, "CONSECUTIVE_VALUES"))
+            segment_value = None
+            parsed_value = numeral_value
+        elif current_numeral_type in [
+            NumeralType.MODIFIER,
+            NumeralType.THOUSAND,
+            NumeralType.HUNDRED,
+        ]:
+            if current_numeral_type is NumeralType.THOUSAND:
+                next_non_special = None
+                trimmed_potential_values = potential_values[index + 1 :]
+                for item in trimmed_potential_values:
+                    if not next_non_special and item[1] is not BufferType.SPECIAL:
+                        next_non_special = item[2]
+                    if item[1] not in [BufferType.SPECIAL, BufferType.NUMERAL]:
+                        break
+                if next_non_special in [
+                    NumeralType.HUNDRED,
+                    NumeralType.DIGIT,
+                    NumeralType.TEEN,
+                    NumeralType.TEN,
+                ]:
+                    parsed_value *= numeral_value
+                    if segment_value:
+                        if (
+                            numeral_segment_tier
+                            and numeral_segment_tier > numeral_value
+                        ):
+                            segment_value += parsed_value
+                        else:
+                            result.invalid.append((segment_value, "LONELY_VALUE"))
+                            segment_value = parsed_value
+                    else:
+                        segment_value = parsed_value
+                    parsed_value = None
+                else:
+                    if (segment_value and not numeral_segment_tier) or (
+                        segment_value and numeral_segment_tier < numeral_value
+                    ):
+                        segment_value += parsed_value
+                        segment_value *= numeral_value
+                        parsed_value = None
+                    else:
+                        parsed_value *= numeral_value
+                numeral_segment_tier = numeral_value
+            elif current_numeral_type is NumeralType.HUNDRED:
+                if numeral_value == 100:
+                    parsed_value *= numeral_value
+                    if segment_value:
+                        if (
+                            numeral_segment_tier
+                            and numeral_segment_tier > numeral_value
+                        ):
+                            pass
+                        else:
+                            result.invalid.append((segment_value, "LONELY_VALUE"))
+                            segment_value = None
+                    else:
+                        next_non_special = None
+                        skip_potential = 0
+                        for item in potential_values[index + 1 :]:
+                            if item[1] is not BufferType.SPECIAL:
+                                next_non_special = item[2]
+                                break
+                            else:
+                                skip_potential += 1
+                        if next_non_special not in [
+                            NumeralType.DIGIT,
+                            NumeralType.TEEN,
+                            NumeralType.TEN,
+                        ]:
+                            skip_potential = 0
+                else:
+                    parsed_value += numeral_value
+            else:
+                parsed_value *= numeral_value
+        elif (
+            current_numeral_type is NumeralType.DIGIT
+            and previous_numeral_type is NumeralType.TEN
+        ):
             larger_numeral = True
             parsed_value = parsed_value + numeral_value
         elif (
@@ -321,22 +404,30 @@ def parser_one(
             and not larger_numeral
         ):
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
-        elif current_numeral_type in [NumeralType.TEEN, NumeralType.TEN] and previous_numeral_type in [
+        elif current_numeral_type in [
+            NumeralType.TEEN,
+            NumeralType.TEN,
+        ] and previous_numeral_type in [
             NumeralType.DIGIT,
             NumeralType.TEEN,
             NumeralType.TEN,
         ]:
             parsed_value = float(f"{int(parsed_value)}{int(numeral_value)}")
-        elif (
-            current_numeral_type in [NumeralType.TEN, NumeralType.TEEN, NumeralType.DIGIT]
-            and previous_numeral_type is NumeralType.THOUSAND
-        ):
+        elif current_numeral_type in [
+            NumeralType.TEN,
+            NumeralType.TEEN,
+            NumeralType.DIGIT,
+        ] and previous_numeral_type in [NumeralType.THOUSAND, NumeralType.HUNDRED]:
             parsed_value = parsed_value + numeral_value
             larger_numeral = True
         elif (
             previous_value_type_converted is BufferType.NUMBER
             or previous_numeral_type is NumeralType.MODIFIER
-        ) and current_numeral_type not in [NumeralType.THOUSAND, NumeralType.MODIFIER]:
+        ) and current_numeral_type not in [
+            NumeralType.THOUSAND,
+            NumeralType.HUNDRED,
+            NumeralType.MODIFIER,
+        ]:
             if segment_value:
                 result.invalid.append((segment_value, "LONELY_VALUE"))
                 segment_value = None
@@ -368,8 +459,34 @@ def parser_one(
                 result.seconds += (parsed_value + segment_value) * scale.scale
                 parsed_scale = scale
 
+    skip_numeral_check = 0
     for index, element in enumerate(potential_values):
+        if skip_numeral_check > 0:
+            skip_numeral_check -= 1
+            continue
+        if element[1] is BufferType.NUMERAL:
+            idx = index + 1
+            while idx < len(potential_values) and potential_values[idx][1] in [
+                BufferType.SPECIAL,
+                BufferType.NUMERAL,
+            ]:
+                skip_numeral_check += 1
+                if potential_values[idx][0] in locale._segmentors:
+                    potential_values[idx] = (None, None, None)
+                    if potential_values[idx + 1][0] in locale._connectors:
+                        potential_values[idx + 1] = (None, None, None)
+                        skip_numeral_check += 1
+                idx += 1
+
+    potential_values = [item for item in potential_values if item[0] is not None]
+
+    for index, element in enumerate(potential_values):
+        if skip_potential > 0:
+            skip_potential -= 1
+            continue
         current_value = element[0]
+        if current_value is None:
+            continue
         current_value_type = element[1]
         current_value_type_converted = current_value_type
         current_numeral_type = element[2]
@@ -396,8 +513,6 @@ def parser_one(
             current_value_type != BufferType.SPECIAL
             or current_value in locale._segmentors
         ):
-            # if previous_numeral_type is NumeralType.THOUSAND:
-            #     ...
             previous_value_type = current_value_type
             previous_numeral_type = current_numeral_type
             previous_value_type_converted = current_value_type_converted
@@ -436,7 +551,10 @@ def parser_one(
         if not segment_value:
             segment_value = 0.0
         selected_value = parsed_value + segment_value
-        if not strict and (len(potential_values) == 1 or (len(result.valid) == 0 and len(result.invalid) == 0)):
+        if not strict and (
+            len(potential_values) == 1
+            or (len(result.valid) == 0 and len(result.invalid) == 0)
+        ):
             result.valid.append((parsed_value + segment_value, locale._second))
             result.seconds += parsed_value + segment_value
         else:

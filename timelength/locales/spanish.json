@@ -192,9 +192,49 @@
             "terms": ["noventa", "Noventa", "NOVENTA", "noventas", "Noventas", "NOVENTAS"]
         },
         "hundred": {
-            "type": "THOUSAND",
+            "type": "HUNDRED",
             "value": 100.0,
-            "terms": ["cien", "Cien", "CIEN", "ciens", "Ciens", "CIENS", "cienes", "Cienes", "CIENES", "cientos", "Cientos", "CIENTOS"]
+            "terms": ["cien", "Cien", "CIEN", "ciens", "Ciens", "CIENS", "cienes", "Cienes", "CIENES", "ciento", "Ciento", "CIENTO", "cientos", "Cientos", "CIENTOS"]
+        },
+        "two_hundred": {
+            "type": "HUNDRED",
+            "value": 200.0,
+            "terms": ["dosciento", "Dosciento", "DOSCIENTO", "doscientos", "Doscientos", "DOSCIENTOS"]
+        },
+        "three_hundred": {
+            "type": "HUNDRED",
+            "value": 300.0,
+            "terms": ["tresciento", "Tresciento", "TRESCIENTO", "trescientos", "Trescientos", "TRESCIENTOS"]
+        },
+        "four_hundred": {
+            "type": "HUNDRED",
+            "value": 400.0,
+            "terms": ["cuatrociento", "Cuatrociento", "CUATROCIENTO", "cuatrocientos", "Cuatrocientos", "CUATROCIENTOS"]
+        },
+        "five_hundred": {
+            "type": "HUNDRED",
+            "value": 500.0,
+            "terms": ["quiniento", "Quiniento", "QUINIENTO", "quinientos", "Quinientos", "QUINIENTOS"]
+        },
+        "six_hundred": {
+            "type": "HUNDRED",
+            "value": 600.0,
+            "terms": ["seisciento", "Seisciento", "SEISCIENTO", "seiscientos", "Seiscientos", "SEISCIENTOS"]
+        },
+        "seven_hundred": {
+            "type": "HUNDRED",
+            "value": 700.0,
+            "terms": ["seteciento", "Seteciento", "SETECIENTO", "setecientos", "Setecientos", "SETECIENTOS"]
+        },
+        "eight_hundred": {
+            "type": "HUNDRED",
+            "value": 800.0,
+            "terms": ["ochociento", "Ochociento", "OCHOCIENTO", "ochocientos", "Ochocientos", "OCHOCIENTOS"]
+        },
+        "nine_hundred": {
+            "type": "HUNDRED",
+            "value": 900.0,
+            "terms": ["noveciento", "Noveciento", "NOVECIENTO", "novecientos", "Novecientos", "NOVECIENTOS"]
         },
         "thousand": {
             "type": "THOUSAND",

@@ -128,7 +128,15 @@ def generate_notstrict_tests():
     cases.append(("veintitrés mil seg", True, 23000.0, [], [(23000.0, Scale(scale=1.0))],))
     cases.append(("dos mil veintitrés seg", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
     cases.append(("dos mil veintitrés cinco seg", True, 5.0, [(2023.0, 'CONSECUTIVE_VALUES')], [(5.0, Scale(scale=1.0))],))
-    cases.append(("dos mil veintitrés mil cinco seg", True, 2023005.0, [], [(2023005.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés mil cinco seg", True, 23005.0, [(2000.0, 'LONELY_VALUE')], [(23005.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés cinco segundos", True, 5.0, [(2023.0, 'CONSECUTIVE_VALUES')], [(5.0, Scale(scale=1.0))],))
+    
+    cases.append(("ciento setenta dos mil", True, 172000.0, [], [(172000.0, Scale(scale=1.0))],))
+    cases.append(("ciento setenta y dos mil", True, 172000.0, [], [(172000.0, Scale(scale=1.0))],))
+    cases.append(("un millón setenta dos mil", True, 1072000.0, [], [(1072000.0, Scale(scale=1.0))],))
+    cases.append(("un millón y setenta dos mil", True, 1072000.0, [], [(1072000.0, Scale(scale=1.0))],))
+    cases.append(("un millón setenta dos mil quinientos y seis", True, 1072506.0, [], [(1072506.0, Scale(scale=1.0))],))
+    cases.append(("un millón setenta dos mil quinientos y seis millones", True, 1072506000000.0, [], [(1072506000000.0, Scale(scale=1.0))],))
 
     cases.append(("veinte veinte tres segundos", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
     cases.append(("veinte 20 tres segundos", True, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))
@@ -255,7 +263,15 @@ def generate_strict_tests():
     cases.append(("veintitrés mil seg", True, 23000.0, [], [(23000.0, Scale(scale=1.0))],))
     cases.append(("dos mil veintitrés seg", True, 2023.0, [], [(30.0, Scale(scale=1.0))],))
     cases.append(("dos mil veintitrés cinco seg", False, 5.0, [(2023.0, 'CONSECUTIVE_VALUES')], [(5.0, Scale(scale=1.0))],))
-    cases.append(("dos mil veintitrés mil cinco seg", True, 2023005.0, [], [(2023005.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés mil cinco seg", False, 23005.0, [(2000.0, 'LONELY_VALUE')], [(23005.0, Scale(scale=1.0))],))
+    cases.append(("dos mil veintitrés cinco segundos", False, 5.0, [(2023.0, 'CONSECUTIVE_VALUES')], [(5.0, Scale(scale=1.0))],))
+    
+    cases.append(("ciento setenta dos mil", False, 0.0, [(172000.0, 'LONELY_VALUE')], [],))
+    cases.append(("ciento setenta y dos mil", False, 0.0, [(172000.0, 'LONELY_VALUE')], [],))
+    cases.append(("un millón setenta dos mil", False, 0.0, [(1072000.0, 'LONELY_VALUE')], [],))
+    cases.append(("un millón y setenta dos mil", False, 0.0, [(1072000.0, 'LONELY_VALUE')], [],))
+    cases.append(("un millón setenta dos mil quinientos y seis", False, 0.0, [(1072506.0, 'LONELY_VALUE')], [],))
+    cases.append(("un millón setenta dos mil quinientos y seis millones", False, 0.0, [(1072506000000.0, 'LONELY_VALUE')], [],))
 
     cases.append(("veinte veinte tres segundos", True, 2023.0, [], [(2023.0, Scale(scale=1.0))],))
     cases.append(("veinte 20 tres segundos", False, 3.0, [(20.0, "CONSECUTIVE_VALUES"), (20.0, "CONSECUTIVE_VALUES")], [(3.0, Scale(scale=1.0))],))

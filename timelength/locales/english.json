@@ -147,7 +147,7 @@
             "terms": ["ninety", "Ninety", "NINETY", "nineties", "Nineties", "NINETIES"]
         },
         "hundred": {
-            "type": "THOUSAND",
+            "type": "HUNDRED",
             "value": 100.0,
             "terms": ["hundred", "Hundred", "HUNDRED", "hundreds", "Hundreds", "HUNDREDS"]
         },
