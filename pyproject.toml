@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "timelength"
-version = "2.0.2"
+version = "2.0.3"
 description = "A Python package to parse human readable lengths of time."
 authors = ["Etorix <admin@etorix.dev>"]
 license = "MIT"
