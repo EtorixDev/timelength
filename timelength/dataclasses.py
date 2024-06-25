@@ -24,6 +24,10 @@ class ParsedTimeLength:
     invalid: list = field(default_factory=list)
     valid: list = field(default_factory=list)
 
+    def __bool__(self) -> bool:
+        """Return `False` if all values are default, `True` otherwise."""
+        return self.success or self.seconds != 0.0 or self.invalid or self.valid
+
     def __str__(self):
         """Return a string indicating the success or failure of the parsing."""
         return "Success" if self.success else "Failure"

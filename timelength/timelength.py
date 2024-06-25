@@ -47,7 +47,6 @@ class TimeLength:
         self.strict = strict
         self.locale = locale
         self.result = ParsedTimeLength()
-        self._init_parse = True
         self.parse()
 
     def __str__(self) -> str:
@@ -65,11 +64,8 @@ class TimeLength:
             and self.locale._parser
             and callable(self.locale._parser)
         ):
-            if not self._init_parse:
-                self.result = ParsedTimeLength()
-            else:
-                self._init_parse = False
-            self.locale._parser(self.content, self.strict, self.locale, self.result)
+            self.result = ParsedTimeLength()
+            self.locale._parser(self.content.strip(), self.strict, self.locale, self.result)
         else:
             raise LocaleConfigError(
                 f"Parser function not found attached to {self.locale}."
