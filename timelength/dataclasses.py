@@ -15,6 +15,7 @@ class ParsedTimeLength:
 
     ### Methods
 
+    - `__bool__`: Return `False` if all values are default, `True` otherwise.
     - `__str__`: Return a string indicating the success or failure of the parsing.
     - `__repr__`: Return a string representation of the `ParsedTimeLength` with attributes included.
     """

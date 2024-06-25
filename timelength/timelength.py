@@ -23,7 +23,7 @@ class TimeLength:
 
     - `parse`: Parse the `content` attribute based on the `strict` and `locale` attributes.
         Automatically called during initialization. Manually call this method again if changes
-        are made to `strict` or `locale`.
+        are made to `content`, `strict`, or `locale`.
     - `to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`, `to_weeks`, `to_months`,
         `to_years`, `to_decades`, `to_centuries`: Convert the total duration to the respective
         units of each method with specified precision.
