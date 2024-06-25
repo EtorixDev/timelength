@@ -14,20 +14,15 @@ class ParsedTimeLength:
     - `valid` (`list`): A list of parts of the input string that were successfully parsed as valid time.
 
     ### Methods
-
-    - `__bool__`: Return `False` if all values are default, `True` otherwise.
+    
     - `__str__`: Return a string indicating the success or failure of the parsing.
     - `__repr__`: Return a string representation of the `ParsedTimeLength` with attributes included.
     """
 
     success: bool = False
     seconds: float = 0.0
-    invalid: list = field(default_factory=list)
-    valid: list = field(default_factory=list)
-
-    def __bool__(self) -> bool:
-        """Return `False` if all values are default, `True` otherwise."""
-        return self.success or self.seconds != 0.0 or self.invalid or self.valid
+    invalid: list = field(default_factory = list)
+    valid: list = field(default_factory = list)
 
     def __str__(self):
         """Return a string indicating the success or failure of the parsing."""
@@ -59,7 +54,7 @@ class Scale:
     scale: float = 0.0
     singular: str = ""
     plural: str = ""
-    terms: list = field(default_factory=list)
+    terms: list = field(default_factory = list)
 
     def __str__(self):
         """Return the singular form of the Scale."""

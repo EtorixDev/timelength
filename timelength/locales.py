@@ -188,7 +188,7 @@ class Locale:
 
     def _load_config(self, file: str):
         """Load the config from the provided path."""
-        with open(file, "r", encoding="utf-8") as f:
+        with open(file, "r", encoding = "utf-8") as f:
             self._config = json.load(f)
 
     def _get_config_or_raise(self, key: str) -> Union[str, float, list, dict]:
