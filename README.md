@@ -1,5 +1,5 @@
 # timelength
-A Python package to parse human readable lengths of time, including long form such as `1 day, 5 hours, and 30 seconds`, short form such as `1d5h30s`, a mix thereof such as `1 day 5h 30s`, and numerals such as `half a day` and `twelve hours`.
+A Python package to parse human readable lengths of time, including long form durations such as `1 day, 5 hours, and 30 seconds`, short form durations such as `1d5h30s`, a mix thereof such as `1 day 5h 30s`, and numerals such as `half a day` and `twelve hours`.
 
 ## Installation
 `timelength` can be installed via pip:
