@@ -146,6 +146,10 @@ def parser_one(
             not buffer
             and (index + 1) < len(content)
             and char in locale._decimal_separators
+            and (
+                index == 0
+                or character_type(content[index - 1]) == CharacterType.SPECIAL
+            )
             and (character_type(content[index + 1]) == CharacterType.NUMBER)
         ):
             buffer += "0."
