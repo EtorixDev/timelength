@@ -4,6 +4,7 @@
     "allowed_terms": ["!", "?", "'", ".", ",", "the"],
     "decimal_separators": ["."],
     "thousand_separators": [",", " "],
+    "hhmmss_delimiters": [":"],
     "parser_file": "parser_one.py",
     "numerals": {
         "zero": {

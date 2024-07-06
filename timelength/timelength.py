@@ -2,7 +2,7 @@ import typing
 
 from timelength.dataclasses import ParsedTimeLength
 from timelength.errors import DisabledScale, LocaleConfigError
-from timelength.locales import English, Locale
+from timelength.locales import LOCALES, English, Guess, Locale
 
 
 class TimeLength:
@@ -27,7 +27,7 @@ class TimeLength:
     - `to_milliseconds`, `to_seconds`, `to_minutes`, `to_hours`, `to_days`, `to_weeks`, `to_months`,
         `to_years`, `to_decades`, `to_centuries`: Convert the total duration to the respective
         units of each method with specified precision.
-    - `__str__`: Return the parsed lengths of time.
+    - `__str__`: Return the passed content.
     - `__repr__`: Return a string representation of the `TimeLength` with attributes included.
 
     ### Example
@@ -39,19 +39,17 @@ class TimeLength:
     ```
     """
 
-    def __init__(
-        self, content: str = "", strict: bool = False, locale: Locale = English()
-    ) -> None:
+    def __init__(self, content: str = "", strict: bool = False, locale: Locale | None = English()) -> None:
         """Initialize the `TimeLength` based on passed settings and call the `parse` method."""
-        self.content = content
-        self.strict = strict
-        self.locale = locale
-        self.result = ParsedTimeLength()
+        self.content: str = content
+        self.strict: bool = strict
+        self.locale: Locale | None = locale
+        self.result: ParsedTimeLength = ParsedTimeLength()
         self.parse()
 
     def __str__(self) -> str:
-        """Return the valid parsed lengths of time."""
-        return str(self.result.valid)
+        """Return the passed content."""
+        return self.content
 
     def __repr__(self) -> str:
         """Return a string representation of the `TimeLength` with attributes included."""
@@ -59,17 +57,23 @@ class TimeLength:
 
     def parse(self) -> None:
         """Parse the passed content using the parser attached to the `TimeLength`'s `Locale`."""
-        if (
-            hasattr(self.locale, "_parser")
-            and self.locale._parser
-            and callable(self.locale._parser)
-        ):
-            self.result = ParsedTimeLength()
-            self.locale._parser(self.content.strip(), self.strict, self.locale, self.result)
+        if not self.locale:
+            locales = LOCALES
         else:
-            raise LocaleConfigError(
-                f"Parser function not found attached to {self.locale}."
-            ) from None
+            locales = [self.locale]
+
+        results: list[ParsedTimeLength] = []
+        for locale in locales:
+            if hasattr(self.locale, "_parser") and self.locale._parser and callable(self.locale._parser):
+                self.locale = locale
+                self.result = ParsedTimeLength()
+                self.locale._parser(self.content.strip(), self.strict, self.locale, self.result)
+                results.append(self.result)
+            else:
+                raise LocaleConfigError(f"Parser function not found attached to {self.locale}.") from None
+
+        results.sort(key=lambda res: len(res.invalid))
+        self.result = results[0]
 
     def to_milliseconds(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to milliseconds.
@@ -81,9 +85,7 @@ class TimeLength:
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
-        return self._round(
-            self.result.seconds, self.locale._millisecond.scale, max_precision
-        )
+        return self._round(self.result.seconds, self.locale._millisecond.scale, max_precision)
 
     def to_seconds(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to seconds.
@@ -95,9 +97,7 @@ class TimeLength:
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
-        return self._round(
-            self.result.seconds, self.locale._second.scale, max_precision
-        )
+        return self._round(self.result.seconds, self.locale._second.scale, max_precision)
 
     def to_minutes(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to minutes.
@@ -109,9 +109,7 @@ class TimeLength:
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
-        return self._round(
-            self.result.seconds, self.locale._minute.scale, max_precision
-        )
+        return self._round(self.result.seconds, self.locale._minute.scale, max_precision)
 
     def to_hours(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to hours.
@@ -183,9 +181,7 @@ class TimeLength:
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
-        return self._round(
-            self.result.seconds, self.locale._decade.scale, max_precision
-        )
+        return self._round(self.result.seconds, self.locale._decade.scale, max_precision)
 
     def to_centuries(self, max_precision=2) -> typing.Union[int, float]:
         """Convert the total seconds to centuries.
@@ -197,17 +193,11 @@ class TimeLength:
         ### Returns:
         - `Union[int, float]` number of this method's units.
         """
-        return self._round(
-            self.result.seconds, self.locale._century.scale, max_precision
-        )
+        return self._round(self.result.seconds, self.locale._century.scale, max_precision)
 
-    def _round(
-        self, total_seconds: float, scale: float, max_precision: int
-    ) -> typing.Union[int, float]:
+    def _round(self, total_seconds: float, scale: float, max_precision: int) -> typing.Union[int, float]:
         """Round the conversion methods while checking for disabled `Scale`s."""
         try:
             return round(total_seconds / scale, max_precision)
         except ZeroDivisionError as e:
-            raise DisabledScale(
-                "That Scale has been disabled by being removed from the config."
-            ) from e
+            raise DisabledScale("That Scale has been disabled by being removed from the config.") from e

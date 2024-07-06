@@ -39,75 +39,34 @@ class Locale:
         self._connectors = self._get_config_or_raise("connectors")
         self._segmentors = self._get_config_or_raise("segmentors")
         if set(self._connectors).intersection(self._segmentors):
-            raise LocaleConfigError(
-                "Connectors and Segmentors may not have overlap in config."
-            )
+            raise LocaleConfigError("Connectors and Segmentors may not have overlap in config.")
         if not self._connectors or not self._segmentors:
-            raise LocaleConfigError(
-                "Connectors and Segmentors must have at least one value in config."
-            )
+            raise LocaleConfigError("Connectors and Segmentors must have at least one value in config.")
 
         # _allowed_terms may appear ONCE in a row in the input while strict is enabled.
         self._allowed_terms = self._get_config_or_raise("allowed_terms")
+        # _hhmmss_delimiters may have overlap with _decimal_separators and _thousand_separators but will have
+        # the least priority in parsing if overlap does occur.
+        self._hhmmss_delimiters = self._get_config_or_raise("hhmmss_delimiters")
         self._decimal_separators = self._get_config_or_raise("decimal_separators")
         self._thousand_separators = self._get_config_or_raise("thousand_separators")
         if set(self._decimal_separators).intersection(self._thousand_separators):
-            raise LocaleConfigError(
-                "Decimal separators and Thousand separators may not have overlap in config."
-            )
+            raise LocaleConfigError("Decimal separators and Thousand separators may not have overlap in config.")
 
         # Default Scales can be disabled by removing them from the config. In their place an empty Scale of
         # scale 0 will be added. This will cause its related TimeLength conversion method, such as `to_minutes`,
         # to error as dividing by 0 is not allowed. Parsing wise, it will be ignored as the terms list is empty.
         scales_json = self._get_config_or_raise("scales")
-        self._millisecond = (
-            Scale(**self._config["scales"]["millisecond"])
-            if "millisecond" in scales_json
-            else Scale()
-        )
-        self._second = (
-            Scale(**self._config["scales"]["second"])
-            if "second" in scales_json
-            else Scale()
-        )
-        self._minute = (
-            Scale(**self._config["scales"]["minute"])
-            if "minute" in scales_json
-            else Scale()
-        )
-        self._hour = (
-            Scale(**self._config["scales"]["hour"])
-            if "hour" in scales_json
-            else Scale()
-        )
-        self._day = (
-            Scale(**self._config["scales"]["day"]) if "day" in scales_json else Scale()
-        )
-        self._week = (
-            Scale(**self._config["scales"]["week"])
-            if "week" in scales_json
-            else Scale()
-        )
-        self._month = (
-            Scale(**self._config["scales"]["month"])
-            if "month" in scales_json
-            else Scale()
-        )
-        self._year = (
-            Scale(**self._config["scales"]["year"])
-            if "year" in scales_json
-            else Scale()
-        )
-        self._decade = (
-            Scale(**self._config["scales"]["decade"])
-            if "decade" in scales_json
-            else Scale()
-        )
-        self._century = (
-            Scale(**self._config["scales"]["century"])
-            if "century" in scales_json
-            else Scale()
-        )
+        self._millisecond = Scale(**self._config["scales"]["millisecond"]) if "millisecond" in scales_json else Scale()
+        self._second = Scale(**self._config["scales"]["second"]) if "second" in scales_json else Scale()
+        self._minute = Scale(**self._config["scales"]["minute"]) if "minute" in scales_json else Scale()
+        self._hour = Scale(**self._config["scales"]["hour"]) if "hour" in scales_json else Scale()
+        self._day = Scale(**self._config["scales"]["day"]) if "day" in scales_json else Scale()
+        self._week = Scale(**self._config["scales"]["week"]) if "week" in scales_json else Scale()
+        self._month = Scale(**self._config["scales"]["month"]) if "month" in scales_json else Scale()
+        self._year = Scale(**self._config["scales"]["year"]) if "year" in scales_json else Scale()
+        self._decade = Scale(**self._config["scales"]["decade"]) if "decade" in scales_json else Scale()
+        self._century = Scale(**self._config["scales"]["century"]) if "century" in scales_json else Scale()
         self._scales: list = [
             self._millisecond,
             self._second,
@@ -182,27 +141,23 @@ class Locale:
             raise LocaleConfigError(f"File not found: {self._parser_file}") from None
         except AttributeError:
             self._parser = None
-            raise LocaleConfigError(
-                f"Parser function not found: {module_name}"
-            ) from None
+            raise LocaleConfigError(f"Parser function not found: {module_name}") from None
 
     def _load_config(self, file: str):
         """Load the config from the provided path."""
-        with open(file, "r", encoding = "utf-8") as f:
+        with open(file, "r", encoding="utf-8") as f:
             self._config = json.load(f)
 
     def _get_config_or_raise(self, key: str) -> Union[str, float, list, dict]:
         """Retrieve a value from the config or raise if the value is not found."""
         value = self._config.get(key)
         if value is None:
-            raise LocaleConfigError(
-                f'Provided config is malformed. No "{key}" key provided.'
-            )
+            raise LocaleConfigError(f'Provided config is malformed. No "{key}" key provided.')
         return value
 
     def __str__(self):
         """Return the name of the `Locale`."""
-        return f"<{self.__class__.__name__}>"
+        return f"{self.__class__.__name__}"
 
     def __repr__(self):
         """Return a string representation of the `Locale` with the config path included."""
@@ -238,3 +193,6 @@ class Spanish(Locale):
 
     def __init__(self):
         super().__init__("spanish.json")
+
+
+LOCALES: list[Locale] = [English, Spanish]
