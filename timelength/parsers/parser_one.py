@@ -60,64 +60,134 @@ def parser_one(
         nonlocal content, buffer, skip_iteration
         skip_thousand = 0
         already_used_decimal = False
-
-        if target_chartype == CharacterType.NUMBER:
-            while next_index < len(content) and (
-                character_type(content[next_index]) == target_chartype
-                or content[next_index]
-                in locale._decimal_separators + locale._thousand_separators
-            ):
-                if skip_thousand:
-                    skip_thousand -= 1
-                    continue
-
-                if character_type(content[next_index]) == CharacterType.NUMBER:
-                    buffer += content[next_index]
-                elif content[next_index] in locale._decimal_separators:
-                    if already_used_decimal:
-                        result.invalid.append(
-                            (
-                                f"{content[next_index - 3]}{content[next_index - 2]}{content[next_index - 1]}{content[next_index]}",
-                                "MALFORMED_DECIMAL",
-                            )
-                        )
-                        next_index += 1
-                        skip_iteration += 1
-                        buffer = ""
-                        break
-                    buffer += "."
-                    decimal_only = True
-                    already_used_decimal = True
-                elif (
-                    not decimal_only
-                    and content[next_index] in locale._thousand_separators
-                ):
-                    if not (
-                        (next_index + 3) < len(content)
-                        and all(
-                            character_type(content[next_index + i])
-                            == CharacterType.NUMBER
-                            for i in range(1, 4)
-                        )
-                    ):
-                        break
-                    else:
-                        for num in range(1, 4):
-                            buffer += content[next_index + num]
-
-                        next_index += 4
-                        skip_iteration += 4
-                        skip_thousand = 4
-                        continue
-                next_index += 1
-                skip_iteration += 1
-        else:
+        
+        if target_chartype != CharacterType.NUMBER:
             while next_index < len(content) and (
                 character_type(content[next_index]) == target_chartype
             ):
                 buffer += content[next_index]
                 next_index += 1
                 skip_iteration += 1
+        else:
+            section = buffer
+            starter_length = len(buffer)
+            buffer = ""
+            valid = True
+            reason = ""
+            hhmmss_segments = []
+            
+            while next_index < len(content) and (
+                character_type(content[next_index]) == target_chartype
+                or content[next_index] in locale._decimal_separators + locale._thousand_separators
+                or content[next_index] == ":"
+            ):
+                if content[next_index] in locale._thousand_separators and (not (next_index + 3) < len(content) or (
+                    (next_index + 3) < len(content) and not all(
+                    character_type(content[next_index + i])
+                    == CharacterType.NUMBER
+                    for i in range(1, 4)
+                ))):
+                    break
+                section += content[next_index]
+                next_index += 1
+            
+            skip_iteration = len(section) - starter_length
+            section = section.strip()
+            for index, char in enumerate(section):
+                if skip_thousand:
+                    skip_thousand -= 1
+                    continue
+
+                if character_type(char) == CharacterType.NUMBER:
+                    buffer += char
+                elif char in locale._decimal_separators:
+                    if already_used_decimal:
+                        valid = False
+                        reason = "MALFORMED_DECIMAL"
+                        break
+                    buffer += "."
+                    decimal_only = True
+                    already_used_decimal = True
+                elif (
+                    not decimal_only
+                    and char in locale._thousand_separators
+                ):
+                    if not (
+                        (index + 3) < len(section)
+                        and all(
+                            character_type(section[index + i])
+                            == CharacterType.NUMBER
+                            for i in range(1, 4)
+                        )
+                    ):
+                        valid = False
+                        reason = "MALFORMED_THOUSAND"
+                        break
+                    else:
+                        for num in range(1, 4):
+                            buffer += section[index + num]
+                        skip_thousand = 3
+                        continue
+                elif char == ":":
+                    if (index + 1) < len(section) and (character_type(section[index + 1]) == CharacterType.NUMBER or section[index + 1] in locale._decimal_separators):
+                        hhmmss_segments.append(buffer)
+                        buffer = ""
+                        already_used_decimal = False
+                        decimal_only = False
+                    else:
+                        valid = False
+                        reason = "MALFORMED_HMS"
+                        break
+                else:
+                    print(">>", char, "<<")
+                    valid = False
+                    reason = "MALFORMED_CONTENT"
+                    break
+            
+            if not valid:
+                result.invalid.append(
+                    (
+                        section,
+                        reason,
+                    )
+                )
+                buffer = ""
+            elif hhmmss_segments:
+                if buffer:
+                    hhmmss_segments.append(buffer)
+                
+                hour = 0
+                minute = 0
+                second = 0
+                
+                if len(hhmmss_segments) > 3:
+                    result.invalid.append((section, "MALFORMED_HMS"))
+                    buffer = ""
+                    return 
+                elif len(hhmmss_segments) == 3:
+                    hour = hhmmss_segments[0]
+                    minute = hhmmss_segments[1]
+                    second = hhmmss_segments[2]
+                elif len(hhmmss_segments) == 2:
+                    hour = 0
+                    minute = hhmmss_segments[0]
+                    second = hhmmss_segments[1]
+                elif len(hhmmss_segments) == 1:
+                    hour = 0
+                    minute = 0
+                    second = hhmmss_segments[0]
+                
+                for num, scale in [(hour, "hour"), (minute, "minute"), (second, "second")]:
+                    if not num:
+                        continue
+                    
+                    buffer = num
+                    save_buffer()
+                    buffer = locale._hour.terms[0] if scale == "hour" else locale._minute.terms[0] if scale == "minute" else locale._second.terms[0]
+                    save_buffer()
+                    buffer = locale._segmentors[0]
+                    save_buffer()
+                    buffer = ""
 
     for index, char in enumerate(content):
         if skip_iteration > 0:
@@ -138,6 +208,9 @@ def parser_one(
                 elif content[index + 1] in locale._thousand_separators:
                     buffer += char
                     check_next(index + 1, CharacterType.NUMBER)
+                elif content[index + 1] == ":":
+                    buffer += char
+                    check_next(index + 1, CharacterType.NUMBER)
                 else:
                     buffer += char
             else:
@@ -152,7 +225,7 @@ def parser_one(
             )
             and (character_type(content[index + 1]) == CharacterType.NUMBER)
         ):
-            buffer += "0."
+            buffer += "0" + char
             check_next(index + 1, CharacterType.NUMBER, True)
         elif current_alphanum == CharacterType.ALPHABET:
             buffer += char
