@@ -6,7 +6,7 @@ from timelength.timelength import TimeLength
 
 @pytest.fixture
 def tl_notstrict():
-    return TimeLength(content = "0 seconds", strict = False, locale = English())
+    return TimeLength(content = "0 seconds", locale = English())
 
 
 def test_parsedtimelength_reset(tl_notstrict):

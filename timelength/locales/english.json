@@ -1,10 +1,10 @@
 {
-    "connectors": [" ", "\t", "-"],
+    "connectors": [" ", "\t", "-", "+"],
     "segmentors": [",", "and", "&"],
-    "allowed_terms": ["!", "?", "'", ".", ",", "the"],
-    "decimal_separators": ["."],
-    "thousand_separators": [",", " "],
+    "allowed_terms": ["!", "?", "'", ".", ",", ":", ";", "the"],
     "hhmmss_delimiters": [":"],
+    "decimal_delimiters": ["."],
+    "thousand_delimiters": [",", " "],
     "parser_file": "parser_one.py",
     "numerals": {
         "zero": {
@@ -195,7 +195,7 @@
         "multiplier": {
             "type": "MULTIPLIER",
             "value": -1.0,
-            "terms": ["of", "Of", "OF"]
+            "terms": ["of", "Of", "OF", "times", "Times", "TIMES", "by", "By", "BY"]
         }
     },
     "scales": {

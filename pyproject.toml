@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "timelength"
-version = "2.0.5"
+version = "3.0.0"
 description = "A Python package to parse human readable lengths of time."
 authors = ["Etorix <admin@etorix.dev>"]
 license = "MIT"
@@ -34,3 +34,4 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 exclude = ["tests"]
+line-length = 120

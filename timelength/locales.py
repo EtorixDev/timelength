@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 import os
 from importlib import util
-from typing import Union
 
-from timelength.dataclasses import Scale
+from timelength.dataclasses import ParserSettings, Scale
+from timelength.enums import FailureFlags, NumeralType
 from timelength.errors import LocaleConfigError
 
 
@@ -14,10 +16,21 @@ class Locale:
     ### Attributes
 
     - `json_location` (`str`): The string path to the config file for this Locale.
+
+    ### Methods
+    - `__str__`: Return the name of the `Locale`.
+    - `__repr__`: Return a string representation of the `Locale` with the config path included.
     """
 
-    def __init__(self, json_location: str = "english.json"):
+    def __init__(
+        self,
+        json_location: str = "english.json",
+        flags: FailureFlags = FailureFlags.NONE,
+        settings: ParserSettings = ParserSettings(),
+    ):
         """Initialize the `Locale` based on the passed config file."""
+        self.flags: FailureFlags = flags
+        self.settings: ParserSettings = settings
         self._json_location = json_location
         self._config = {}
         base_dir = os.path.dirname(__file__)
@@ -38,20 +51,31 @@ class Locale:
 
         self._connectors = self._get_config_or_raise("connectors")
         self._segmentors = self._get_config_or_raise("segmentors")
-        if set(self._connectors).intersection(self._segmentors):
-            raise LocaleConfigError("Connectors and Segmentors may not have overlap in config.")
         if not self._connectors or not self._segmentors:
-            raise LocaleConfigError("Connectors and Segmentors must have at least one value in config.")
+            raise LocaleConfigError("Connectors and Segmentors must have at least one value in the config.")
+        if set(self._connectors).intersection(self._segmentors):
+            raise LocaleConfigError("Connectors and Segmentors may not have overlap in the config.")
 
         # _allowed_terms may appear ONCE in a row in the input while strict is enabled.
+        # They may not appear in the middle of a segment/sentence, i.e interrupting a value/scale pair.
         self._allowed_terms = self._get_config_or_raise("allowed_terms")
-        # _hhmmss_delimiters may have overlap with _decimal_separators and _thousand_separators but will have
-        # the least priority in parsing if overlap does occur.
         self._hhmmss_delimiters = self._get_config_or_raise("hhmmss_delimiters")
-        self._decimal_separators = self._get_config_or_raise("decimal_separators")
-        self._thousand_separators = self._get_config_or_raise("thousand_separators")
-        if set(self._decimal_separators).intersection(self._thousand_separators):
-            raise LocaleConfigError("Decimal separators and Thousand separators may not have overlap in config.")
+        self._decimal_delimiters = self._get_config_or_raise("decimal_delimiters")
+        self._thousand_delimiters = self._get_config_or_raise("thousand_delimiters")
+        all_delimiters = self._hhmmss_delimiters + self._decimal_delimiters + self._thousand_delimiters
+        if len(all_delimiters) != len(set(all_delimiters)):
+            raise LocaleConfigError("Delimiters may not have overlap in the config.")
+
+        self._specials: list[str] = list(
+            set(
+                self._connectors
+                + self._segmentors
+                + self._allowed_terms
+                + self._hhmmss_delimiters
+                + self._decimal_delimiters
+                + self._thousand_delimiters
+            )
+        )
 
         # Default Scales can be disabled by removing them from the config. In their place an empty Scale of
         # scale 0 will be added. This will cause its related TimeLength conversion method, such as `to_minutes`,
@@ -67,7 +91,7 @@ class Locale:
         self._year = Scale(**self._config["scales"]["year"]) if "year" in scales_json else Scale()
         self._decade = Scale(**self._config["scales"]["decade"]) if "decade" in scales_json else Scale()
         self._century = Scale(**self._config["scales"]["century"]) if "century" in scales_json else Scale()
-        self._scales: list = [
+        scales: list[Scale] = [
             self._millisecond,
             self._second,
             self._minute,
@@ -79,6 +103,7 @@ class Locale:
             self._decade,
             self._century,
         ]
+        self._scales = [scale for scale in scales if scale]
 
         # Allow for custom defined Scales.
         for scale_name in scales_json:
@@ -98,10 +123,41 @@ class Locale:
                 setattr(self, f"_{scale_name}", custom_scale)
                 self._scales.append(custom_scale)
 
-        self._numerals = self._get_config_or_raise("numerals")
+        if not self._scales:
+            raise LocaleConfigError("At least one scale must be enabled in the config.")
+
+        for scale in self._scales:
+            missing: list[str] = []
+
+            if not scale.scale:
+                missing.append("scale")
+            if not scale.singular:
+                missing.append("singular")
+            if not scale.plural:
+                missing.append("plural")
+            if not scale.terms:
+                missing.append("terms")
+
+            if missing:
+                raise LocaleConfigError(f"Scale {scale} is missing the following attributes: {missing}")
+
+        self._numerals: dict[str, dict[str, NumeralType | float | list[str]]] = self._get_config_or_raise("numerals")
+        for numeral in self._numerals:
+            numeral_type = self._numerals[numeral]["type"]
+            if numeral_type not in NumeralType.__members__:
+                raise LocaleConfigError(f"Numeral type {numeral_type} is not a valid NumeralType.")
+            self._numerals[numeral]["type"] = NumeralType(numeral_type)
         self._extra_data = self._get_config_or_raise("extra_data")
 
-    def _get_scale(self, text: str) -> Scale:
+    def __str__(self):
+        """Return the name of the `Locale`."""
+        return f"{self.__class__.__name__}"
+
+    def __repr__(self):
+        """Return a string representation of the `Locale` with the config path included."""
+        return f"{self.__str__()}(flags=({repr(self.flags)}), settings={repr(self.settings)})"
+
+    def _get_scale(self, text: str) -> Scale | None:
         """Get the scale that contains a specific value in its terms list."""
         for scale in self._scales:
             scale: Scale
@@ -109,7 +165,7 @@ class Locale:
                 return scale
         return None
 
-    def _get_numeral(self, text: str) -> dict:
+    def _get_numeral(self, text: str) -> dict[str, dict[str, NumeralType | float | list[str]]] | None:
         """Get a numeral that contains a specific value in its terms list."""
         numeral = {}
         for numeral in self._numerals:
@@ -148,20 +204,12 @@ class Locale:
         with open(file, "r", encoding="utf-8") as f:
             self._config = json.load(f)
 
-    def _get_config_or_raise(self, key: str) -> Union[str, float, list, dict]:
+    def _get_config_or_raise(self, key: str) -> str | float | list | dict:
         """Retrieve a value from the config or raise if the value is not found."""
         value = self._config.get(key)
         if value is None:
             raise LocaleConfigError(f'Provided config is malformed. No "{key}" key provided.')
         return value
-
-    def __str__(self):
-        """Return the name of the `Locale`."""
-        return f"{self.__class__.__name__}"
-
-    def __repr__(self):
-        """Return a string representation of the `Locale` with the config path included."""
-        return f'Locale("{self._json_location}")'
 
 
 class CustomLocale(Locale):
@@ -169,30 +217,142 @@ class CustomLocale(Locale):
     Represents a custom `Locale`.
 
     ### Attributes
-
     - `json_location` (`str`): The string path to the config file for this `Locale`.
+    - `flags` (`FailureFlags`): The flags that will cause parsing to fail.
+    - `settings` (`ParserSettings`): The settings for the parser.
+
+
+    ### Methods
+    - `__str__`: Return the name of the `Locale`.
+    - `__repr__`: Return a string representation of the `Locale` with the config path included.
     """
 
-    def __init__(self, path_to_json: str):
-        super().__init__(path_to_json)
+    def __init__(
+        self, json_location: str, flags: FailureFlags = FailureFlags.NONE, settings: ParserSettings = ParserSettings()
+    ):
+        super().__init__(json_location, flags, settings)
 
 
 class English(Locale):
     """
     Represents the `English` `Locale`.
+
+    ### Attributes
+    - `flags` (`FailureFlags`): The flags that will cause parsing to fail.
+    - `settings` (`ParserSettings`): The settings for the parser.
+
+    ### Methods
+    - `__str__`: Return the name of the `Locale`.
+    - `__repr__`: Return a string representation of the `Locale` with the config path included.
+
+    ### Available Flags
+    - `NONE`
+    - `ALL`
+    - `MALFORMED_CONTENT`
+    - `UNKNOWN_TERM`
+    - `MALFORMED_DECIMAL`
+    - `MALFORMED_THOUSAND`
+    - `MALFORMED_HHMMSS`
+    - `LONELY_VALUE`
+    - `CONSECUTIVE_VALUE`
+    - `LONELY_SCALE`
+    - `LEADING_SCALE`
+    - `DUPLICATE_SCALE`
+    - `CONSECUTIVE_SCALE`
+    - `CONSECUTIVE_CONNECTOR`
+    - `CONSECUTIVE_SEGMENTORS`
+    - `CONSECUTIVE_SPECIALS`
+    - `MISPLACED_ALLOWED_TERM`
+    - `UNUSED_MULTIPLIER`
+
+    ### Available Settings
+    - `assume_seconds`
+    - `limit_allowed_terms`
+    - `allow_duplicate_scales`
+    - `allow_thousands_extra_digits`
+    - `allow_thousands_lacking_digits`
+    - `allow_decimals_lacking_digits`
     """
 
-    def __init__(self):
-        super().__init__("english.json")
+    def __init__(self, flags: FailureFlags = FailureFlags.NONE, settings: ParserSettings = ParserSettings()):
+        super().__init__("english.json", flags, settings)
 
 
 class Spanish(Locale):
     """
     Represents the `Spanish` `Locale`.
+
+    ### Attributes
+    - `flags` (`FailureFlags`): The flags that will cause parsing to fail.
+    - `settings` (`ParserSettings`): The settings for the parser.
+
+    ### Methods
+    - `__str__`: Return the name of the `Locale`.
+    - `__repr__`: Return a string representation of the `Locale` with the config path included.
+
+    ### Available Flags
+    - `NONE`
+    - `ALL`
+    - `MALFORMED_CONTENT`
+    - `UNKNOWN_TERM`
+    - `MALFORMED_DECIMAL`
+    - `MALFORMED_THOUSAND`
+    - `MALFORMED_HHMMSS`
+    - `LONELY_VALUE`
+    - `CONSECUTIVE_VALUE`
+    - `LONELY_SCALE`
+    - `LEADING_SCALE`
+    - `DUPLICATE_SCALE`
+    - `CONSECUTIVE_SCALE`
+    - `CONSECUTIVE_CONNECTOR`
+    - `CONSECUTIVE_SEGMENTORS`
+    - `CONSECUTIVE_SPECIALS`
+    - `MISPLACED_ALLOWED_TERM`
+    - `UNUSED_MULTIPLIER`
+
+    ### Available Settings
+    - `assume_seconds`
+    - `limit_allowed_terms`
+    - `allow_duplicate_scales`
+    - `allow_thousands_extra_digits`
+    - `allow_thousands_lacking_digits`
+    - `allow_decimals_lacking_digits`
     """
 
-    def __init__(self):
-        super().__init__("spanish.json")
+    def __init__(self, flags: FailureFlags = FailureFlags.NONE, settings: ParserSettings = ParserSettings()):
+        super().__init__("spanish.json", flags, settings)
+
+
+class Guess(Locale):
+    """
+    Represents an unknown `Locale`. Does not contain all of the attributes of a `Locale`. Should never be used
+    as a final `Locale`, but instead an intermediary until a `Locale` is determined.
+
+    ### Attributes
+    - `flags` (`FailureFlags`): The flags that will cause parsing to fail.
+    - `settings` (`ParserSettings`): The settings for the parser.
+
+    ### Methods
+    - `__str__`: Return the name of the `Locale`.
+    - `__repr__`: Return a string representation of the `Locale` with the config path included.
+
+
+    ### Available Flags
+    All settings. The actual applicable settings will be applied to the final `Locale`.
+
+    ### Available Settings
+    All flags. The actual applicable flags will be applied to the final `Locale`.
+    """
+
+    def __init__(
+        self,
+        json_location: str = "english.json",
+        flags: FailureFlags = FailureFlags.NONE,
+        settings: ParserSettings = ParserSettings(),
+    ):
+        self._json_location = json_location
+        self.flags: FailureFlags = flags
+        self.settings: ParserSettings = settings
 
 
 LOCALES: list[Locale] = [English, Spanish]

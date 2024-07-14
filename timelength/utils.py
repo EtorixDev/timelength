@@ -1,6 +1,15 @@
 import unicodedata
 
-from timelength.enums import BufferType, CharacterType
+from timelength.enums import CharacterType, StringType
+
+
+def is_int(num: str) -> bool:
+    """Check if the passed string is an integer."""
+    try:
+        num_int = int(num)
+        return num_int == float(num)
+    except ValueError:
+        return False
 
 
 def is_float(num: str) -> bool:
@@ -13,7 +22,7 @@ def is_float(num: str) -> bool:
 
 
 def character_type(text: str) -> CharacterType:
-    """Check the type of the passed character based on the `CharacterType` enum."""
+    """Check the type of character based on the `CharacterType` enum."""
     if is_float(text):
         return CharacterType.NUMBER
     elif text.isalpha():
@@ -22,18 +31,18 @@ def character_type(text: str) -> CharacterType:
         return CharacterType.SPECIAL
 
 
-def buffer_type(text: str, scales: list, numerals: list, symbols: list) -> BufferType:
-    """Check the type of the passed string based on the `BufferType` enum."""
+def string_type(text: str, scales: list, numerals: list, symbols: list) -> StringType:
+    """Check the type of string based on the `StringType` enum."""
     if is_float(text):
-        return BufferType.NUMBER
+        return StringType.NUMBER
     elif text in scales:
-        return BufferType.SCALE
+        return StringType.SCALE
     elif text in numerals:
-        return BufferType.NUMERAL
+        return StringType.NUMERAL
     elif text in symbols:
-        return BufferType.SPECIAL
+        return StringType.SPECIAL
     else:
-        return BufferType.UNKNOWN
+        return StringType.UNKNOWN
 
 
 def remove_diacritics(text: str) -> str:
