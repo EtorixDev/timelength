@@ -28,18 +28,18 @@ def character_type(text: str) -> CharacterType:
     elif text.isalpha():
         return CharacterType.ALPHABET
     else:
-        return CharacterType.SPECIAL
+        return CharacterType.UNKNOWN
 
 
-def string_type(text: str, scales: list, numerals: list, symbols: list) -> StringType:
+def string_type(text: str, scale_terms: list, numeral_terms: list, symbol_terms: list) -> StringType:
     """Check the type of string based on the `StringType` enum."""
     if is_float(text):
         return StringType.NUMBER
-    elif text in scales:
+    elif text in scale_terms:
         return StringType.SCALE
-    elif text in numerals:
+    elif text in numeral_terms:
         return StringType.NUMERAL
-    elif text in symbols:
+    elif text in symbol_terms:
         return StringType.SPECIAL
     else:
         return StringType.UNKNOWN

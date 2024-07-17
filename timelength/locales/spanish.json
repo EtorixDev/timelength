@@ -340,6 +340,16 @@
             "terms": ["c", "C", "siglo", "Siglo", "SIGLO", "siglos", "Siglos", "SIGLOS"]
         }
     },
+    "settings": {
+        "assume_seconds": "SINGLE",
+        "limit_allowed_terms": true,
+        "allow_duplicate_scales": true,
+        "allow_thousands_extra_digits": false,
+        "allow_thousands_lacking_digits": false,
+        "allow_decimals_lacking_digits": true
+    },
+    "flags": [
+    ],
     "extra_data": {
     }
 }

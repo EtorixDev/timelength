@@ -8,12 +8,12 @@ class CharacterType(Enum):
     ### Members
     - `NUMBER`: Represents number characters.
     - `ALPHABET`: Represents alphabetic characters.
-    - `SPECIAL`: Represents special characters (ex: !).
+    - `UNKNOWN`: Represents unknown special characters.
     """
 
     NUMBER = "NUMBER"
     ALPHABET = "ALPHABET"
-    SPECIAL = "SPECIAL"
+    UNKNOWN = "UNKNOWN"
 
 
 class StringType(Enum):
