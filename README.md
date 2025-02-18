@@ -19,7 +19,7 @@ A flexible python duration parser designed for human readable lengths of time, i
 - [Example Inputs](#example-inputs)
     - [Usage Notes](#usage-notes)
 - [Supported Locales](#supported-locales)
-- [Customization](#customization)
+    - [Customization](#customization)
 
 ## Installation
 `timelength` can be installed via pip:
@@ -45,6 +45,8 @@ print(tl.result.seconds)
 # 4572.0
 print(tl.to_minutes(max_precision=3))
 # 76.2
+print(tl.result.delta)
+# 1:16:12
 print(tl.ago(base=datetime(2025, 1, 1, 0, 0, 0, 0, timezone.utc)))
 # 2024-12-31 22:43:48+00:00
 print(tl.hence(base=datetime(2025, 1, 1, 0, 0, 0, 0, timezone.utc)))
@@ -289,7 +291,7 @@ Valid JSONs must include the following keys:
 - `thousand_delimiters`
     - Characters used to break up large numbers. Can't have overlap with `hhmmss_delimiters`, `decimal_delimiters`, or `fraction_delimiters`.
 - `fraction_delimiters`
-    - Characters used to break form fractions. Can't have overlap with `hhmmss_delimiters`, `decimal_delimiters`, or `thousand_delimiters`.
+    - Characters used to form fractions. Can't have overlap with `hhmmss_delimiters`, `decimal_delimiters`, or `thousand_delimiters`.
 - `parser_file`
     - The name of this locale's parser file (extension included) located in `timelength/parsers/`, or the path to the parser file if stored elsewhere. 
     - **Ensure only a trusted file is used as this could allow unintended code execution.**
