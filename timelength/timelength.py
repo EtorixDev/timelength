@@ -1,485 +1,495 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 
-from timelength.dataclasses import ParsedTimeLength, ParserSettings, Scale
-from timelength.enums import FailureFlags
-from timelength.errors import DisabledScale, LocaleConfigError
-from timelength.locales import LOCALES, English, Guess, Locale
+from timelength.dataclasses import ParsedTimeLength, Scale
+from timelength.errors import (
+    InvalidScaleError,
+    NotALocaleError,
+    ParsedTimeDeltaError,
+    PotentialDateTimeError,
+    PotentialTimeDeltaError,
+)
+from timelength.locales import English, Guess, Locale
 
 
 class TimeLength:
-    """
+    """---
     Represents a length of time.
 
-    #### Arguments
-    - content: `str` — The length of time to be parsed.
-    - locale: `Locale = English()` — The locale context used for parsing the content.
-        - Can be set to `Guess()` to attempt each locale attached to `LOCALES`, keeping the best result.
-        - Include custom locales in the pool by appending them to `LOCALES`.
-        - The best result is the one with the least invalid results.
-        - The chosen locale will overwrite `locale`.
-
     #### Attributes
-    - result: `ParsedTimeLength` — An object containing the parsed content.
-    - delta: `timedelta` — The total length of time parsed as a `timedelta`.
-        - If the parsing failed this attribute will be an empty `timedelta()`.
-        - If the parsed value exceeds the maximum supported by `timedelta`, this attribute will be `timedelta.max` and
-            the `ago()` and `hence()` methods will raise an `OverflowError` if used.
+    - content: `str` — The string to be parsed.
+    - locale: `Locale | Guess = English()` — The context used for parsing.
+        - Will be set to the guessed locale if `Guess()` is passed.
+
+    #### Properties
+    - result: `ParsedTimeLength` — The result of parsing.
 
     #### Methods
-    - `parse()` — Parse the `content` based on the `locale`.
-        - Automatically called during initialization. Manually call this method again if changes are made to `content`
-            or `locale`.
-    - `ago()` — Return a `datetime` from the past adjusted for the parsed timelength.
-    - `hence()` — Return a `datetime` from the future adjusted for the parsed timelength.
-    - `to_milliseconds()`, `to_seconds()`, `to_minutes()`, `to_hours()`, `to_days()`, `to_weeks()`, `to_months()`,
+    - `parse()` — Parse `self.content` based on `self.locale`.
+        - Automatically called during initialization. Manually call if changes are made to `self.content` or `self.locale`.
+    - `ago()` — Return a `datetime` from the past adjusted for `self.result`.
+    - `hence()` — Return a `datetime` from the future adjusted for `self.result`.
+    - `to_milliseconds()`, `to_minutes()`, `to_hours()`, `to_days()`, `to_weeks()`, `to_months()`,
         `to_years()`, `to_decades()`, `to_centuries()`
-      - Convert the parsed duration to the respective units of each method.
+        - Convert the parsed duration to the respective units of each method.
 
     #### Raises
-    - `DisabledScale` — Raised when a conversion method for a disabled `Scale` is called.
-    - `LocaleConfigError` — Raised when `locale` doesn't have a valid parser function attached.
-    - `NotImplementedError` — Raised when performing arithmetic or comparison operations with unsupported types.
+    - `NotALocaleError` when `locale` is not an instance of `Locale` or `Guess`.
+    - `InvalidParserError` when the parser on `locale` is not callable.
 
     #### Example
     ```python
     from timelength import TimeLength
 
     tl = TimeLength("2 hours 30 minutes")
-    print(f"Total Seconds: {tl.to_seconds()}")
+    print(f"Total Seconds: {tl.result.seconds}")
     ```
     """
 
-    def __init__(self, content: str, locale: Locale = English()) -> None:
-        self.content: str = content
-        self.locale: Locale = locale() if isinstance(locale, type) else locale
-        self.result: ParsedTimeLength = None
-        self.delta: timedelta = None
-        self.parse(guess_locale=isinstance(locale, Guess))
+    def __init__(self, content: str, locale: Locale | Guess = English()) -> None:
+        self.content: str = str(content)
 
-    def _parse_locale(self, locale: Locale) -> tuple[ParsedTimeLength, Locale]:
-        if hasattr(locale, "_parser") and callable(locale._parser):
-            result: ParsedTimeLength = ParsedTimeLength()
-            locale._parser(self.content.strip(), locale, result)
-            return (result, locale)
-        else:
-            self.locale = locale
-            self.result = ParsedTimeLength()
-            self.delta = timedelta()
-            if isinstance(locale, Locale):
-                raise LocaleConfigError(f"Parser function not found attached to {locale}.") from None
-            else:
-                raise LocaleConfigError("Invalid value provided for locale.") from None
+        # self.locale must always be a Locale, so if Guess is passed, temporarily set it to the first
+        # locale in Guess().locales to prevent a wasted initialization while the best locale is found.
+        self.locale: Locale = locale.locales[0] if isinstance(locale, Guess) else locale
 
-    def parse(self, guess_locale: bool = False) -> None:
-        """
-        Parse `self.content` using the parser attached to `self.locale`. Updates `self.result` and `self.delta`.
+        if not isinstance(self.locale, Locale):
+            raise NotALocaleError(locale)
+
+        self._result: ParsedTimeLength
+        self.parse(guess_locale=locale if isinstance(locale, Guess) else False)
+
+    @property
+    def result(self) -> ParsedTimeLength:
+        """The result of parsing."""
+        return self._result
+
+    def _parse_locale(self, locale: Locale) -> ParsedTimeLength:
+        return locale.parser(self.content.strip(), locale)
+
+    def parse(self, guess_locale: bool | Guess = False) -> None:
+        """---
+        Parse `self.content` using the parser attached to `self.locale`.
 
         #### Arguments
-        - guess_locale: `bool = False` — Attempt each `Locale` attached to `LOCALES` and keep the best result.
+        - guess_locale: `bool | Guess = False` — Attempt each `Locale` and keep the best result.
             - The best result is the one with the least invalid results.
-            - The chosen locale will overwrite `self.locale`.
-            - Include custom locales in the pool by appending them to `LOCALES`.
+            - Pass an existing instance of `Guess` to prevent re-initializing every locale in `Guess().locales`.
+            - Custom locales can be added to the pool by appending them to `Guess().locales` in the passed `Guess`.
+            - Flags or settings passed to `Guess` will be used for each locale. If none are passed, the default for
+                each locale will be used.
+            - To use different flags or settings for each locale, access `Guess().locales` and set them individually.
+
+        #### Updates
+        - `self.result` with the outcome of parsing.
+        - `self.locale` with the best locale if `guess_locale` is set.
         """
 
-        if not guess_locale:
-            self.result, self.locale = self._parse_locale(self.locale)
+        if guess_locale is False:
+            self._result = self._parse_locale(self.locale)
         else:
-            # Flags and settings passed to Guess to overwrite config values.
-            # If None, the config values of each locale will be used.
-            flags: FailureFlags = self.locale.flags
-            settings: ParserSettings = self.locale.settings
+            guess: Guess = guess_locale if isinstance(guess_locale, Guess) else Guess()
             results: list[tuple[ParsedTimeLength, Locale]] = []
 
-            for locale in LOCALES:
-                if isinstance(locale, type):
-                    locale = locale(flags=flags, settings=settings)
-                else:
-                    locale.flags = flags if flags else locale.flags
-                    locale.settings = settings if settings else locale.settings
+            for locale in guess.locales:
+                locale.flags = guess.flags if guess.flags is not None else locale.flags
+                locale.settings = guess.settings if guess.settings is not None else locale.settings
 
-                results.append(self._parse_locale(locale))
+                results.append((self._parse_locale(locale), locale))
 
-            # Sort most invalid to least invalid, breaking ties by least valid to most valid, lastly breaking further
-            # ties by reverse alphabetical Locale name. Everything aforementioned is written opposite due to a
-            # limitation on reverse alphabetical sorting, so the final reverse rights it.
+            # Sort most invalid to least invalid, breaking ties by least valid to most valid,
+            # lastly breaking further ties by reverse alphabetical Locale name.
             results.sort(
                 key=lambda res: (len(res[0].invalid), -len(res[0].valid), res[1].__class__.__name__), reverse=True
             )
 
-            self.result, self.locale = results[-1]
-
-        try:
-            self.delta = timedelta(seconds=self.result.seconds)
-        except OverflowError:
-            self.delta = timedelta.max
+            self._result, self.locale = results[-1]
 
     def ago(self, base: datetime = datetime.now(timezone.utc)) -> datetime:
-        """
-        Return a datetime from the past based on the parsed timelength.
+        """---
+        Get a `datetime` from the past.
 
         #### Arguments
-        - base: `datetime = datetime.now(timezone.utc)` — The relative time to subtract the `delta` attribute from.
-
-        #### Raises
-        - `OverflowError` — Raised when the parsed value exceeds the supported bounds of `timedelta`.
-        - `OverflowError` — Raised when the resultant datetime would exceed the supported bounds of `datetime`.
+        - base: `datetime = datetime.now(timezone.utc)` — The relative time to subtract from.
 
         #### Returns
-        - A `datetime` representing `base` minus `self.delta`.
+        - A `datetime` representing `base` minus `self.result.delta`.
+
+        #### Raises
+        - `ParsedTimeDeltaError` when `self.result` exceeds the supported bounds of `timedelta`.
+        - `PotentialDateTimeError` when the resultant `datetime` would exceed the supported bounds of `datetime`.
         """
 
-        if self.delta == timedelta.max:
-            raise OverflowError("The parsed value exceeds the supported bounds of timedelta.")
-        elif self._invalid_datetime(base, -self.delta):
-            raise OverflowError("The resultant datetime would exceed the supported bounds of datetime.")
+        if self.result.delta is None:
+            raise ParsedTimeDeltaError
+        elif self._invalid_datetime(base, self.result.delta, subtract=True):
+            raise PotentialDateTimeError
         else:
-            return base - self.delta
+            return base - self.result.delta
 
     def hence(self, base: datetime = datetime.now(timezone.utc)) -> datetime:
-        """
-        Return a datetime from the future based on the parsed timelength.
+        """---
+        Get a `datetime` from the future.
 
         #### Arguments
-        - base: `datetime = datetime.now(timezone.utc)`: The relative time to subtract the `delta` attribute from.
-
-        #### Raises
-        - `OverflowError` — Raised when the parsed value exceeds the supported bounds of `timedelta`.
-        - `OverflowError` — Raised when the resultant datetime would exceed the supported bounds of `datetime`.
+        - base: `datetime = datetime.now(timezone.utc)` — The relative time to add to.
 
         #### Returns
-        - A `datetime` representing `base` plus `self.delta`.
+        - A `datetime` representing `base` plus `self.result.delta`.
+
+        #### Raises
+        - `ParsedTimeDeltaError` when `self.result` exceeds the supported bounds of `timedelta`.
+        - `PotentialDateTimeError` when the resultant `datetime` would exceed the supported bounds of `datetime`.
         """
 
-        if self.delta == timedelta.max:
-            raise OverflowError("The parsed value exceeds the supported bounds of timedelta.")
-        elif self._invalid_datetime(base, self.delta):
-            raise OverflowError("The resultant datetime would exceed the supported bounds of datetime.")
+        if self.result.delta is None:
+            raise ParsedTimeDeltaError
+        elif self._invalid_datetime(base, self.result.delta):
+            raise PotentialDateTimeError
         else:
-            return base + self.delta
+            return base + self.result.delta
 
-    def to_milliseconds(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to milliseconds.
-
-        #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Millisecond` is disabled.
-
-        #### Returns
-        - A `float` of this method's units.
-        """
-
-        return self._round(self.result.seconds, self.locale._millisecond, max_precision)
-
-    def to_seconds(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to seconds.
+    def to_milliseconds(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to milliseconds.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Second` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as milliseconds.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.millisecond` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._second, max_precision)
+        return self._round(self.locale.millisecond, max_precision)
 
-    def to_minutes(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to minutes.
+    def to_minutes(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to minutes.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Minute` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as minutes.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.minute` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._minute, max_precision)
+        return self._round(self.locale.minute, max_precision)
 
-    def to_hours(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to hours.
+    def to_hours(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to hours.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Hour` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as hours.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.hour` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._hour, max_precision)
+        return self._round(self.locale.hour, max_precision)
 
-    def to_days(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to days.
+    def to_days(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to days.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Day` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as days.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.day` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._day, max_precision)
+        return self._round(self.locale.day, max_precision)
 
-    def to_weeks(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to weeks.
+    def to_weeks(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to weeks.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Week` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as weeks.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.week` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._week, max_precision)
+        return self._round(self.locale.week, max_precision)
 
-    def to_months(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to months.
+    def to_months(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to months.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Month` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as months.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.month` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._month, max_precision)
+        return self._round(self.locale.month, max_precision)
 
-    def to_years(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to years.
+    def to_years(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to years.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Year` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as years.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.year` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._year, max_precision)
+        return self._round(self.locale.year, max_precision)
 
-    def to_decades(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to decades.
+    def to_decades(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to decades.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Decade` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as decades.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.decade` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._decade, max_precision)
+        return self._round(self.locale.decade, max_precision)
 
-    def to_centuries(self, max_precision=2) -> float:
-        """
-        Convert the parsed seconds to centuries.
+    def to_centuries(self, max_precision: int | None = None) -> float:
+        """---
+        Return `self.result.seconds` converted to centuries.
 
         #### Arguments
-        - max_precision: `int = 2` — The maximum number of decimal places to include.
-
-        #### Raises
-        - `DisabledScale` — Raised when `Century` is disabled.
+        - max_precision: `int | None = None` — The maximum number of decimal places to include.
 
         #### Returns
-        - A `float` of this method's units.
+        - A `float` representing `self.result.seconds` as centuries.
+
+        #### Raises
+        - `InvalidScaleError` when `self.locale.century` is invalid.
         """
 
-        return self._round(self.result.seconds, self.locale._century, max_precision)
+        return self._round(self.locale.century, max_precision)
 
-    def _round(self, total_seconds: float, scale: Scale, max_precision: int) -> float:
-        if scale.scale:
-            return float(round(total_seconds / scale.scale, max_precision))
+    def _round(self, scale: Scale, max_precision: int | None) -> float:
+        if not scale.valid:
+            raise InvalidScaleError(scale.singular)
         else:
-            raise DisabledScale(
-                f"{scale.plural.capitalize()} has been disabled by having its value set to 0."
-                if scale.plural
-                else "That scale has been disabled by being removed from the config."
+            val = self.result.seconds / scale.scale
+            return round(val, max_precision) if max_precision else val
+
+    def _invalid_datetime(self, date: datetime, delta: timedelta, subtract: bool = False) -> bool:
+        """Check if the resultant `datetime` would exceed the bounds supported by `datetime`."""
+
+        date_sec = date.timestamp()
+        delta_sec = delta.total_seconds()
+
+        # datetime.min and datetime.max error on Windows when using .timestamp()
+        # so it is necessary to manually create the datetime objects.
+        min_datetime_timestamp = datetime(1, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc).timestamp()
+        max_datetime_timestamp = datetime(9999, 12, 31, 23, 59, 59, 999999, tzinfo=timezone.utc).timestamp()
+
+        return (
+            (date_sec + delta_sec < min_datetime_timestamp or date_sec + delta_sec > max_datetime_timestamp)
+            if not subtract
+            else (date_sec - delta_sec < min_datetime_timestamp or date_sec - delta_sec > max_datetime_timestamp)
+        )
+
+    def _invalid_timedelta(self, first: timedelta, second: timedelta, subtract: bool = False) -> bool:
+        """Check if the resultant `timedelta` would exceed the bounds supported by `timedelta`."""
+
+        first_sec = first.total_seconds()
+        second_sec = second.total_seconds()
+
+        return (
+            (
+                first_sec + second_sec < timedelta.min.total_seconds()
+                or first_sec + second_sec > timedelta.max.total_seconds()
             )
+            if not subtract
+            else (
+                first_sec - second_sec < timedelta.min.total_seconds()
+                or first_sec - second_sec > timedelta.max.total_seconds()
+            )
+        )
+
+    def _convert_to_hhmmss(self, seconds: int | float) -> str:
+        """Convert the passed seconds to `Days, HH:MM:SS.MS` format."""
+
+        days, remainder = divmod(seconds, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, remainder = divmod(remainder, 60)
+        seconds, milliseconds = divmod(remainder, 1)
+        decimal = round(milliseconds, 9)
+        formatted = f"{int(hours):02}:{int(minutes):02}:{int(seconds):02}"
+
+        if decimal:
+            formatted += f".{str(decimal)[2:]}".rstrip("0").rstrip(".")
+
+        if days > 0:
+            return f"{int(days)} Day{'s' if days != 1 else ''}, {formatted}"
+        else:
+            return formatted
 
     def __str__(self) -> str:
-        """Return a formatted string with `self.delta`."""
-        return f"TimeLength: {self.delta}"
+        """Return `self.result.seconds` as a `Days, HH:MM:SS.MS` string."""
+        return self._convert_to_hhmmss(self.result.seconds)
 
     def __repr__(self) -> str:
         """Return a string representation of `self` with attributes included."""
-        return f'TimeLength(content="{self.content}", locale={repr(self.locale)})'
+        return f"TimeLength(content={repr(self.content)}, locale={repr(self.locale)})"
 
-    def _invalid_datetime(self, date: datetime, delta: timedelta) -> bool:
-        """Check if the resultant datetime would exceed the supported bounds of datetime."""
-        return (date_sec := date.timestamp()) + (
-            delta_sec := delta.total_seconds()
-        ) < datetime.min.timestamp() or date_sec + delta_sec > datetime.max.timestamp()
-
-    def _invalid_timedelta(self, first: timedelta, second: timedelta) -> bool:
-        """Check if the resultant timedelta would exceed the supported bounds of timedelta."""
-        return (first_sec := first.total_seconds()) + (
-            second_sec := second.total_seconds()
-        ) < timedelta.min.total_seconds() or first_sec + second_sec > timedelta.max.total_seconds()
-
-    def __add__(self, other: "TimeLength | timedelta | float | int") -> "TimeLength":
-        """
-        Get the sum of `self` and a `TimeLength`, a `timedelta`, or a number. Returned `TimeLength`s are absolute.
+    def __add__(self, other: TimeLength | timedelta | float | int) -> TimeLength:
+        """---
+        Get the absolute sum of `self` and a `TimeLength`, a `timedelta`, or a number.
 
         #### Arguments
         - other: `TimeLength | timedelta | float | int` — The object to add to `self`.
 
         #### Returns
         - A `TimeLength` that represents the absolute sum of `self` and the passed value.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
         """
+
+        base = self.locale.base_scale
 
         if isinstance(other, TimeLength):
             return TimeLength(
-                content=f"{abs(self.result.seconds + other.result.seconds)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds + other.result.seconds) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         elif isinstance(other, timedelta):
             return TimeLength(
-                content=f"{abs(self.result.seconds + other.total_seconds())} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds + other.total_seconds()) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         elif isinstance(other, (float, int)):
             return TimeLength(
-                content=f"{abs(self.result.seconds + other)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds + other) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         else:
             return NotImplemented
 
-    def __radd__(self, other: "TimeLength | datetime | timedelta") -> "TimeLength | datetime | timedelta":
-        """
-        Get the sum of a `TimeLength`, a `datetime`, or a `timedelta` and `self`. Returned `TimeLength`s are absolute.
+    def __radd__(self, other: datetime | timedelta) -> datetime | timedelta:
+        """---
+        Get the sum of a `datetime` or a `timedelta` and `self`.
 
         #### Arguments
-        - other: `TimeLength | datetime | timedelta` — The object to add `self` to.
-
-        #### Raises
-        - `OverflowError` — Raised when the parsed value exceeds the supported bounds of `timedelta`.
-        - `OverflowError` — Raised when the resultant datetime would exceed the supported bounds of `datetime`.
-        - `OverflowError` — Raised when the resultant timedelta would exceed the supported bounds of `timedelta`.
+        - other: `datetime | timedelta` — The object to add `self` to.
 
         #### Returns
-        - A `TimeLength` that represents the absolute sum of the passed value and `self`.
-        - A `datetime` in the future by the amount of `self.delta`.
-        - A `timedelta` that represents the sum of the passed value and `self.delta`.
+        - A `datetime` in the future by the amount of `self.result.delta`.
+        - A `timedelta` that represents the sum of the passed value and `self.result.delta`.
+
+        #### Raises
+        - `PotentialDateTimeError` when the resultant `datetime` would exceed the supported bounds of `datetime`.
+        - `ParsedTimeDeltaError` when `self.result` is a value exceeding the supported bounds of `timedelta`.
+        - `PotentialTimeDeltaError` when the resultant `timedelta` would exceed the supported bounds of `timedelta`.
         """
 
-        if isinstance(other, TimeLength):
-            return TimeLength(
-                content=f"{abs(self.result.seconds + other.result.seconds)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
-            )
-        elif isinstance(other, datetime):
+        if isinstance(other, datetime):
             return self.hence(other)
         elif isinstance(other, timedelta):
-            if self.delta == timedelta.max:
-                raise OverflowError("The parsed value exceeds the supported bounds of timedelta.")
-            elif self._invalid_timedelta(other, self.delta):
-                raise OverflowError("The resultant timedelta would exceed the supported bounds of timedelta.")
+            if self.result.delta is None:
+                raise ParsedTimeDeltaError
+            elif self._invalid_timedelta(other, self.result.delta):
+                raise PotentialTimeDeltaError
 
-            return self.delta + other
+            return self.result.delta + other
         else:
             return NotImplemented
 
-    def __sub__(self, other: "TimeLength | timedelta | float | int") -> "TimeLength":
-        """
-        Get the difference between `self` and a `TimeLength`, a `timedelta`, or a number. Returned `TimeLength`s are
-        absolute.
+    def __sub__(self, other: TimeLength | timedelta | float | int) -> TimeLength:
+        """---
+        Get the absolute difference between `self` and a `TimeLength`, a `timedelta`, or a number.
 
         #### Arguments
         - other: `TimeLength | timedelta | float | int` — The object to subtract from `self`.
 
         #### Returns
         - A `TimeLength` that represents the absolute difference between `self` and the passed value.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
         """
+
+        base = self.locale.base_scale
 
         if isinstance(other, TimeLength):
             return TimeLength(
-                content=f"{abs(self.result.seconds - other.result.seconds)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds - other.result.seconds) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         elif isinstance(other, timedelta):
             return TimeLength(
-                content=f"{abs(self.result.seconds - other.total_seconds())} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds - other.total_seconds()) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         elif isinstance(other, (float, int)):
             return TimeLength(
-                content=f"{abs(self.result.seconds - other)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds - other) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         else:
             return NotImplemented
 
-    def __rsub__(self, other: "TimeLength | datetime | timedelta") -> "TimeLength | datetime | timedelta":
+    def __rsub__(self, other: datetime | timedelta) -> datetime | timedelta:
         """
-        Get the difference between a `TimeLength`, a `datetime`, or a `timedelta` and `self`. Returned `TimeLength`s
-        are absolute.
+        Get the difference between a a `datetime` or a `timedelta` and `self`.
 
         #### Arguments
-        - other: `TimeLength | datetime | timedelta` — The object to subtract `self` from.
-
-        #### Raises
-        - `OverflowError` — Raised when the parsed value exceeds the supported bounds of `timedelta`.
-        - `OverflowError` — Raised when the resultant datetime would exceed the supported bounds of `datetime`.
-        - `OverflowError` — Raised when the resultant timedelta would exceed the supported bounds of `timedelta`.
+        - other: `datetime | timedelta` — The object to subtract `self` from.
 
         #### Returns
-        - A `TimeLength` that represents the absolute difference between the passed value and `self`.
-        - A `datetime` in the past by the amount of `self.delta`.
-        - A `timedelta` that represents the difference between the passed value and `self.delta`.
+        - A `datetime` in the past by the amount of `self.result.delta`.
+        - A `timedelta` that represents the difference between the passed value and `self.result.delta`.
+
+        #### Raises
+        - `PotentialDateTimeError` when the resultant `datetime` would exceed the supported bounds of `datetime`.
+        - `ParsedTimeDeltaError` when `self.result` is a value exceeding the supported bounds of `timedelta`.
+        - `PotentialTimeDeltaError` when the resultant `timedelta` would exceed the supported bounds of `timedelta`.
         """
 
-        if isinstance(other, TimeLength):
-            return TimeLength(
-                content=f"{abs(other.result.seconds - self.result.seconds)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
-            )
-        elif isinstance(other, datetime):
+        if isinstance(other, datetime):
             return self.ago(other)
         elif isinstance(other, timedelta):
-            if self.delta == timedelta.max:
-                raise OverflowError("The parsed value exceeds the supported bounds of timedelta.")
-            elif self._invalid_timedelta(other, -self.delta):
-                raise OverflowError("The resultant timedelta would exceed the supported bounds of timedelta.")
+            if self.result.delta is None:
+                raise ParsedTimeDeltaError
+            elif self._invalid_timedelta(other, self.result.delta, True):
+                raise PotentialTimeDeltaError("The resultant timedelta would exceed the supported bounds of timedelta.")
 
-            return other - self.delta
+            return other - self.result.delta
         else:
             return NotImplemented
 
-    def __mul__(self, other: float | int) -> "TimeLength":
+    def __mul__(self, other: float | int) -> TimeLength:
         """
         Get the absolute multiplication of `self` and a number.
 
@@ -488,21 +498,26 @@ class TimeLength:
 
         #### Returns
         - A `TimeLength` that represents the absolute multiplication of `self` and the passed number.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
         """
 
         if not isinstance(other, (float, int)):
             return NotImplemented
 
+        base = self.locale.base_scale
+
         return TimeLength(
-            content=f"{abs(self.result.seconds * other)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-            locale=self.locale,
+            content=f"{abs(self.result.seconds * other) / base.scale} {base.terms[0]}",
+            locale=deepcopy(self.locale),
         )
 
     __rmul__ = __mul__
 
-    def __truediv__(self, other: "TimeLength | timedelta | float | int") -> "TimeLength | float":
+    def __truediv__(self, other: TimeLength | timedelta | float | int) -> TimeLength | float:
         """
-        Get the division of `self` and a `TimeLength`, a `timedelta`, or a number. Returned `TimeLength`s are absolute.
+        Get the division of `self` and a `TimeLength`, a `timedelta`, or a number.
 
         #### Arguments
         - other: `TimeLength | timedelta | float | int` — The object to divide `self` by.
@@ -510,6 +525,9 @@ class TimeLength:
         #### Returns
         - A `TimeLength` that represents the absolute division of `self` and the passed number.
         - A `float` that represents the division of `self` and the passed `TimeLength` or `timedelta`.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
         """
 
         if isinstance(other, TimeLength):
@@ -517,35 +535,34 @@ class TimeLength:
         elif isinstance(other, timedelta):
             return self.result.seconds / other.total_seconds()
         elif isinstance(other, (float, int)):
+            base = self.locale.base_scale
+
             return TimeLength(
-                content=f"{abs(self.result.seconds / other)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds / other) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         else:
             return NotImplemented
 
-    def __rtruediv__(self, other: "TimeLength | timedelta") -> float:
+    def __rtruediv__(self, other: timedelta) -> float:
         """
-        Get the division of a `TimeLength` or `timedelta` and `self`.
+        Get the division of a `timedelta` and `self`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to divide with `self`.
+        - other: `timedelta` — The object to divide by `self`.
 
         #### Returns
-        - A `float` that represents the division of the passed `TimeLength` or `timedelta` and `self`.
+        - A `float` that represents the division of the passed `timedelta` and `self`.
         """
 
-        if isinstance(other, TimeLength):
-            return other.result.seconds / self.result.seconds
-        elif isinstance(other, timedelta):
+        if isinstance(other, timedelta):
             return other.total_seconds() / self.result.seconds
         else:
             return NotImplemented
 
-    def __floordiv__(self, other: "TimeLength | timedelta | float | int") -> "TimeLength | float":
+    def __floordiv__(self, other: TimeLength | timedelta | float | int) -> TimeLength | float:
         """
-        Get the floor division of `self` and a `TimeLength`, a `timedelta`, or a number. Returned `TimeLength`s are
-        absolute.
+        Get the floor division of `self` and a `TimeLength`, a `timedelta`, or a number.
 
         #### Arguments
         - other: `TimeLength | timedelta | float | int` — The object to divide `self` by.
@@ -553,85 +570,93 @@ class TimeLength:
         #### Returns
         - A `TimeLength` that represents the absolute floor division of `self` and the passed number.
         - A `float` that represents the floor division of `self` and the passed `TimeLength` or `timedelta`.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
         """
 
         if isinstance(other, TimeLength):
-            return self.result.seconds // other.result.seconds
+            return int(self.result.seconds // other.result.seconds)
         elif isinstance(other, timedelta):
-            return self.result.seconds // other.total_seconds()
+            return int(self.result.seconds // other.total_seconds())
         elif isinstance(other, (float, int)):
+            base = self.locale.base_scale
+
             return TimeLength(
-                content=f"{abs(self.result.seconds // other)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds // other) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         else:
             return NotImplemented
 
-    def __rfloordiv__(self, other: "TimeLength | timedelta") -> float:
+    def __rfloordiv__(self, other: timedelta) -> float:
         """
-        Get the floor division of a `TimeLength` or `timedelta` and `self`.
+        Get the floor division of a `timedelta` and `self`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to divide with `self`.
+        - other: `timedelta` — The object to divide by `self`.
 
         #### Returns
-        - A `float` that represents the floor division of the passed `TimeLength` or `timedelta` and `self`.
+        - A `float` that represents the floor division of the passed `timedelta` and `self`.
         """
 
-        if isinstance(other, TimeLength):
-            return other.result.seconds // self.result.seconds
-        elif isinstance(other, timedelta):
-            return other.total_seconds() // self.result.seconds
+        if isinstance(other, timedelta):
+            return int(other.total_seconds() // self.result.seconds)
         else:
             return NotImplemented
 
-    def __mod__(self, other: "TimeLength | timedelta") -> "TimeLength":
+    def __mod__(self, other: TimeLength | timedelta) -> TimeLength:
         """
-        Get the modulo of `self` and a `TimeLength` or `timedelta`.
+        Get the absolute modulo of `self` and a `TimeLength` or `timedelta`.
 
         #### Arguments
         - other: `TimeLength | timedelta` — The object to modulo `self` by.
 
         #### Returns
-        - A `TimeLength` that represents the absolute modulo of `self` and the passed `TimeLength` or `timedelta`.
+        - A `TimeLength` that represents the modulo of `self` and the passed `TimeLength` or `timedelta`.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
         """
+
+        base = self.locale.base_scale
 
         if isinstance(other, TimeLength):
             return TimeLength(
-                content=f"{abs(self.result.seconds % other.result.seconds)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds % other.result.seconds) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         elif isinstance(other, timedelta):
             return TimeLength(
-                content=f"{abs(self.result.seconds % other.total_seconds())} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
+                content=f"{abs(self.result.seconds % other.total_seconds()) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
             )
         else:
             return NotImplemented
 
-    def __rmod__(self, other: "TimeLength | timedelta") -> "TimeLength | timedelta":
+    def __rmod__(self, other: timedelta) -> timedelta:
         """
         Get the modulo of a `TimeLength` or `timedelta` and `self`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to modulo with `self`.
+        - other: `timedelta` — The object to modulo by `self`.
 
         #### Returns
-        - A `TimeLength` that represents the absolute modulo of the passed `TimeLength` and `self`.
-        - A `timedelta` that represents the modulo of the passed `timedelta` and `self`.
+        - A timedelta that represents the modulo of the passed `timedelta` and `self`.
+
+        #### Raises
+        - `ParsedTimeDeltaError` when `self.result` is a value exceeding the supported bounds of `timedelta`.
         """
 
-        if isinstance(other, TimeLength):
-            return TimeLength(
-                content=f"{abs(other.result.seconds % self.result.seconds)} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-                locale=self.locale,
-            )
-        elif isinstance(other, timedelta):
-            return other % self.delta
+        if isinstance(other, timedelta):
+            if self.result.delta is None:
+                raise ParsedTimeDeltaError
+
+            return other % self.result.delta
         else:
             return NotImplemented
 
-    def __divmod__(self, other: "TimeLength | timedelta") -> tuple[float, "TimeLength"]:
+    def __divmod__(self, other: TimeLength | timedelta) -> tuple[float, TimeLength]:
         """
         Get the divmod of `self` and a `TimeLength` or `timedelta`.
 
@@ -639,39 +664,43 @@ class TimeLength:
         - other: `TimeLength | timedelta` — The object to divmod `self` by.
 
         #### Returns
-        - A tuple of a `float` and a `TimeLength` that represent the absolute divmod of `self` and the passed
+        - A tuple of a `float` and an absolute `TimeLength` that represent the divmod of `self` and the passed
             `TimeLength` or `timedelta`.
         """
 
-        if isinstance(other, (TimeLength, timedelta)):
+        if isinstance(other, TimeLength):
             return (
-                self // other,
+                self.result.seconds // other.result.seconds,
+                self % other,
+            )
+        elif isinstance(other, timedelta):
+            return (
+                self.result.seconds // other.total_seconds(),
                 self % other,
             )
         else:
             return NotImplemented
 
-    def __rdivmod__(self, other: "TimeLength | timedelta") -> tuple[float, "TimeLength | timedelta"]:
+    def __rdivmod__(self, other: timedelta) -> tuple[float, timedelta]:
         """
-        Get the divmod of a `TimeLength` or `timedelta` and `self`.
+        Get the divmod of a `timedelta` and `self`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to divmod with `self`.
+        - other: `timedelta` — The object to divmod by `self`.
 
         #### Returns
-        - A tuple of a `float` and a `TimeLength` or `timedelta` that represent the absolute divmod of the passed
-            `TimeLength` or `timedelta` and `self`.
+        - A tuple of a `float` and a `timedelta` that represent the divmod of the passed `timedelta` and `self`.
         """
 
-        if isinstance(other, (TimeLength, timedelta)):
+        if isinstance(other, timedelta):
             return (
-                other // self,
+                other.total_seconds() // self.result.seconds,
                 other % self,
             )
         else:
             return NotImplemented
 
-    def __pow__(self, other: float | int, mod: "TimeLength | timedelta" = None) -> "TimeLength":
+    def __pow__(self, other: float | int, mod: TimeLength | timedelta | None = None) -> TimeLength:
         """
         Get the absolute power of `self` and a number.
 
@@ -680,7 +709,10 @@ class TimeLength:
         - mod: `TimeLength | timedelta = None` — The object to modulo the result by.
 
         #### Returns
-        - A `TimeLength` that represents the absolute power of `self` and the passed number, optionally moduloed by `mod`.
+        - A `TimeLength` that represents the absolute power of `self` and the passed number, optionally moduloed by mod.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
         """
 
         if not isinstance(other, (float, int)):
@@ -689,14 +721,16 @@ class TimeLength:
             return NotImplemented
 
         if not mod:
-            result = abs(self.result.seconds**other)
+            result: float = abs(self.result.seconds**other)
         else:
-            mod_seconds = mod.result.seconds if isinstance(mod, TimeLength) else mod.total_seconds()
-            result = abs(pow(self.result.seconds, other, int(mod_seconds)))
+            mod_seconds: float = mod.result.seconds if isinstance(mod, TimeLength) else mod.total_seconds()
+            result: float = abs(self.result.seconds**other) % mod_seconds
+
+        base = self.locale.base_scale
 
         return TimeLength(
-            content=f"{result} {self.locale._second.plural if self.locale._second else self.locale._scales[0].plural}",
-            locale=self.locale,
+            content=f"{result / base.scale} {base.terms[0]}",
+            locale=deepcopy(self.locale),
         )
 
     def __bool__(self) -> bool:
@@ -707,18 +741,21 @@ class TimeLength:
         """Return the length of `self.content`."""
         return len(self.content)
 
-    def __abs__(self) -> "TimeLength":
-        """Return self unchanged as `TimeLength` is an absolute measurement."""
+    def __abs__(self) -> TimeLength:
+        """Return `self` unchanged as `TimeLength` is an absolute measurement."""
         return self
 
-    def __pos__(self) -> "TimeLength":
-        """Return self unchanged as `TimeLength` is an absolute measurement."""
+    def __pos__(self) -> TimeLength:
+        """Return `self` unchanged as `TimeLength` is an absolute measurement."""
         return self
 
-    def __neg__(self) -> None:
+    def __neg__(self):
         return NotImplemented
 
-    def __gt__(self, other: "TimeLength | timedelta") -> bool:
+    def __invert__(self):
+        return NotImplemented
+
+    def __gt__(self, other: TimeLength | timedelta) -> bool:
         """
         Check if `self` is greater than `other`.
 
@@ -726,7 +763,7 @@ class TimeLength:
         - other: `TimeLength | timedelta` — The object to compare to.
 
         #### Returns
-        - A `bool` indicating if `self` is greater than `other`.
+        - A `bool` indicating if `self` is greater than `other` based on their seconds.
         """
 
         if not isinstance(other, (TimeLength, timedelta)):
@@ -734,15 +771,15 @@ class TimeLength:
 
         return self.result.seconds > (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
 
-    def __ge__(self, other: "TimeLength | timedelta") -> bool:
+    def __ge__(self, other: TimeLength | timedelta) -> bool:
         """
-        Check if `self` is greater than or equal to `other`.
+        Check if `self` is greater than or equal to other.
 
         #### Arguments
         - other: `TimeLength | timedelta` — The object to compare to.
 
         #### Returns
-        - A `bool` indicating if `self` is greater than or equal to `other`.
+        - A `bool` indicating if `self` is greater than or equal to `other` based on their seconds.
         """
 
         if not isinstance(other, (TimeLength, timedelta)):
@@ -750,7 +787,7 @@ class TimeLength:
 
         return self.result.seconds >= (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
 
-    def __lt__(self, other: "TimeLength | timedelta") -> bool:
+    def __lt__(self, other: TimeLength | timedelta) -> bool:
         """
         Check if `self` is less than `other`.
 
@@ -758,7 +795,7 @@ class TimeLength:
         - other: `TimeLength | timedelta` — The object to compare to.
 
         #### Returns
-        - A `bool` indicating if `self` is less than `other`.
+        - A `bool` indicating if `self` is less than `other` based on their seconds.
         """
 
         if not isinstance(other, (TimeLength, timedelta)):
@@ -766,7 +803,7 @@ class TimeLength:
 
         return self.result.seconds < (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
 
-    def __le__(self, other: "TimeLength | timedelta") -> bool:
+    def __le__(self, other: TimeLength | timedelta) -> bool:
         """
         Check if `self` is less than or equal to `other`.
 
@@ -774,7 +811,7 @@ class TimeLength:
         - other: `TimeLength | timedelta` — The object to compare to.
 
         #### Returns
-        - A `bool` indicating if `self` is less than or equal to `other`.
+        - A `bool` indicating if `self` is less than or equal to `other` based on their seconds.
         """
 
         if not isinstance(other, (TimeLength, timedelta)):
@@ -782,7 +819,7 @@ class TimeLength:
 
         return self.result.seconds <= (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
 
-    def __eq__(self, other: "TimeLength | timedelta") -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Check if `self` is equal to `other`.
 
@@ -790,15 +827,15 @@ class TimeLength:
         - other: `TimeLength | timedelta` — The object to compare to.
 
         #### Returns
-        - A `bool` indicating if `self` is equal to `other`.
+        - A `bool` indicating if `self` is equal to `other` based on their seconds.
         """
 
         if not isinstance(other, (TimeLength, timedelta)):
-            return NotImplemented
+            return False
 
         return self.result.seconds == (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
 
-    def __ne__(self, other: "TimeLength | timedelta") -> bool:
+    def __ne__(self, other: object) -> bool:
         """
         Check if `self` is not equal to `other`.
 
@@ -806,10 +843,10 @@ class TimeLength:
         - other: `TimeLength | timedelta` — The object to compare to.
 
         #### Returns
-        - A `bool` indicating if `self` is not equal to `other`.
+        - A `bool` indicating if `self` is not equal to `other` based on their seconds.
         """
 
         if not isinstance(other, (TimeLength, timedelta)):
-            return NotImplemented
+            return True
 
         return self.result.seconds != (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())

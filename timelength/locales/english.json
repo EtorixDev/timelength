@@ -5,7 +5,70 @@
     "hhmmss_delimiters": [":"],
     "decimal_delimiters": ["."],
     "thousand_delimiters": [",", " "],
+    "fraction_delimiters": ["/", "\\"],
     "parser_file": "parser_one.py",
+    "scales": {
+        "millisecond": {
+            "scale": 0.001,
+            "singular": "millisecond",
+            "plural": "milliseconds",
+            "terms": ["ms", "Ms", "MS", "millisecond", "Millisecond", "MILLISECOND", "milliseconds", "Milliseconds", "MILLISECONDS"]
+        },
+        "second": {
+            "scale": 1.0,
+            "singular": "second",
+            "plural": "seconds",
+            "terms": ["s", "S", "sec", "Sec", "SEC", "secs", "Secs", "SECS", "second", "Second", "SECOND", "seconds", "Seconds", "SECONDS"]
+        },
+        "minute": {
+            "scale": 60.0,
+            "singular": "minute",
+            "plural": "minutes",
+            "terms": ["m", "min", "Min", "MIN", "mins", "Mins", "MINS", "minute", "Minute", "MINUTE", "minutes", "Minutes", "MINUTES"]
+        },
+        "hour": {
+            "scale": 3600.0,
+            "singular": "hour",
+            "plural": "hours",
+            "terms": ["h", "H", "hr", "Hr", "HR", "hrs", "Hrs", "HRS", "hour", "Hour", "HOUR", "hours", "Hours", "HOURS"]
+        },
+        "day": {
+            "scale": 86400.0,
+            "singular": "day",
+            "plural": "days",
+            "terms": ["d", "day", "Day", "DAY", "days", "Days", "DAYS", "dy", "Dy", "DY", "dys", "Dys", "DYS"]
+        },
+        "week": {
+            "scale": 604800.0,
+            "singular": "week",
+            "plural": "weeks",
+            "terms": ["w", "W", "wk", "Wk", "WK", "wks", "Wks", "WKS", "week", "Week", "WEEK", "weeks", "Weeks", "WEEKS"]
+        },
+        "month": {
+            "scale": 2635200.0,
+            "singular": "month",
+            "plural": "months",
+            "terms": ["M", "month", "Month", "MONTH", "months", "Months", "MONTHS", "mo", "Mo", "MO"]
+        },
+        "year": {
+            "scale": 31536000.0,
+            "singular": "year",
+            "plural": "years",
+            "terms": ["y", "Y", "yr", "Yr", "YR", "yrs", "Yrs", "YRS", "year", "Year", "YEAR", "years", "Years", "YEARS"]
+        },
+        "decade": {
+            "scale": 315360000.0,
+            "singular": "decade",
+            "plural": "decades",
+            "terms": ["D", "dec", "Dec", "DEC", "decs", "Decs", "DECS", "decade", "Decade", "DECADE", "decades", "Decades", "DECADES"]
+        },
+        "century": {
+            "scale": 3153600000.0,
+            "singular": "century",
+            "plural": "centuries",
+            "terms": ["c", "C", "century", "Century", "CENTURY", "centuries", "Centuries", "CENTURIES"]
+        }
+    },
     "numerals": {
         "zero": {
             "type": "DIGIT",
@@ -173,103 +236,41 @@
             "terms": ["trillion", "Trillion", "TRILLION", "trillions", "Trillions", "TRILLIONS"]
         },
         "full": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": 1.0,
             "terms": ["full", "Full", "FULL", "whole", "Whole", "WHOLE"]
         },
         "half": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": 0.5,
-            "terms": ["half", "Half", "HALF", "halves", "Halves", "HALVES"]
+            "terms": ["half", "Half", "HALF", "halves", "Halves", "HALVES", "halfs", "Halfs", "HALFS"]
         },
         "third": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": "1/3",
             "terms": ["third", "Third", "THIRD", "thirds", "Thirds", "THIRDS"]
         },
         "quarter": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": 0.25,
             "terms": ["quarter", "Quarter", "QUARTER", "quarters", "Quarters", "QUARTERS"]
         },
-        "multiplier": {
-            "type": "MULTIPLIER",
+        "operator": { 
+            "type": "OPERATOR",
             "value": -1.0,
             "terms": ["of", "Of", "OF", "times", "Times", "TIMES", "by", "By", "BY"]
         }
     },
-    "scales": {
-        "millisecond": {
-            "scale": 0.001,
-            "singular": "millisecond",
-            "plural": "milliseconds",
-            "terms": ["ms", "Ms", "MS", "millisecond", "Millisecond", "MILLISECOND", "milliseconds", "Milliseconds", "MILLISECONDS"]
-        },
-        "second": {
-            "scale": 1.0,
-            "singular": "second",
-            "plural": "seconds",
-            "terms": ["s", "S", "sec", "Sec", "SEC", "secs", "Secs", "SECS", "second", "Second", "SECOND", "seconds", "Seconds", "SECONDS"]
-        },
-        "minute": {
-            "scale": 60.0,
-            "singular": "minute",
-            "plural": "minutes",
-            "terms": ["m", "min", "Min", "MIN", "mins", "Mins", "MINS", "minute", "Minute", "MINUTE", "minutes", "Minutes", "MINUTES"]
-        },
-        "hour": {
-            "scale": 3600.0,
-            "singular": "hour",
-            "plural": "hours",
-            "terms": ["h", "H", "hr", "Hr", "HR", "hrs", "Hrs", "HRS", "hour", "Hour", "HOUR", "hours", "Hours", "HOURS"]
-        },
-        "day": {
-            "scale": 86400.0,
-            "singular": "day",
-            "plural": "days",
-            "terms": ["d", "day", "Day", "DAY", "days", "Days", "DAYS", "dy", "Dy", "DY", "dys", "Dys", "DYS"]
-        },
-        "week": {
-            "scale": 604800.0,
-            "singular": "week",
-            "plural": "weeks",
-            "terms": ["w", "W", "wk", "Wk", "WK", "wks", "Wks", "WKS", "week", "Week", "WEEK", "weeks", "Weeks", "WEEKS"]
-        },
-        "month": {
-            "scale": 2635200.0,
-            "singular": "month",
-            "plural": "months",
-            "terms": ["M", "month", "Month", "MONTH", "months", "Months", "MONTHS", "mo", "Mo", "MO"]
-        },
-        "year": {
-            "scale": 31536000.0,
-            "singular": "year",
-            "plural": "years",
-            "terms": ["y", "Y", "yr", "Yr", "YR", "yrs", "Yrs", "YRS", "year", "Year", "YEAR", "years", "Years", "YEARS"]
-        },
-        "decade": {
-            "scale": 315360000.0,
-            "singular": "decade",
-            "plural": "decades",
-            "terms": ["D", "dec", "Dec", "DEC", "decs", "Decs", "DECS", "decade", "Decade", "DECADE", "decades", "Decades", "DECADES"]
-        },
-        "century": {
-            "scale": 3153600000.0,
-            "singular": "century",
-            "plural": "centuries",
-            "terms": ["c", "C", "century", "Century", "CENTURY", "centuries", "Centuries", "CENTURIES"]
-        }
-    },
+    "flags": [
+    ],
     "settings": {
-        "assume_seconds": "SINGLE",
+        "assume_scale": "SINGLE",
         "limit_allowed_terms": true,
         "allow_duplicate_scales": true,
         "allow_thousands_extra_digits": false,
         "allow_thousands_lacking_digits": false,
         "allow_decimals_lacking_digits": true
     },
-    "flags": [
-    ],
     "extra_data": {
     }
 }

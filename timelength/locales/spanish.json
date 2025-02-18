@@ -5,7 +5,70 @@
     "hhmmss_delimiters": [":"],
     "decimal_delimiters": [","],
     "thousand_delimiters": [".", " "],
+    "fraction_delimiters": ["/", "\\"],
     "parser_file": "parser_one.py",
+    "scales": {
+        "millisecond": {
+            "scale": 0.001,
+            "singular": "milisegundo",
+            "plural": "milisegundos",
+            "terms": ["ms", "Ms", "MS", "milisegundo", "Milisegundo", "MILISEGUNDO", "milisegundos", "Milisegundos", "MILISEGUNDOS"]
+        },
+        "second": {
+            "scale": 1.0,
+            "singular": "segundo",
+            "plural": "segundos",
+            "terms": ["s", "S", "seg", "Seg", "SEG", "segs", "Segs", "SEGS", "segundo", "Segundo", "SEGUNDO", "segundos", "Segundos", "SEGUNDOS"]
+        },
+        "minute": {
+            "scale": 60.0,
+            "singular": "minuto",
+            "plural": "minutos",
+            "terms": ["m", "min", "Min", "MIN", "mins", "Mins", "MINS", "minuto", "Minuto", "MINUTO", "minutos", "Minutos", "MINUTOS"]
+        },
+        "hour": {
+            "scale": 3600.0,
+            "singular": "hora",
+            "plural": "horas",
+            "terms": ["h", "H", "hr", "Hr", "HR", "hrs", "Hrs", "HRS", "hora", "Hora", "HORA", "horas", "Horas", "HORAS"]
+        },
+        "day": {
+            "scale": 86400.0,
+            "singular": "dia",
+            "plural": "dias",
+            "terms": ["d", "dia", "Dia", "DIA", "dias", "Dias", "DIAS"]
+        },
+        "week": {
+            "scale": 604800.0,
+            "singular": "semana",
+            "plural": "semanas",
+            "terms": ["sem", "Sem", "SEM", "semana", "Semana", "SEMANA", "semanas", "Semanas", "SEMANAS"]
+        },
+        "month": {
+            "scale": 2635200.0,
+            "singular": "mes",
+            "plural": "meses",
+            "terms": ["M", "mes", "Mes", "MES", "meses", "Meses", "MESES", "mo", "Mo", "MO", "mos", "Mos", "MOS"]
+        },
+        "year": {
+            "scale": 31536000.0,
+            "singular": "ano",
+            "plural": "anos",
+            "terms": ["a", "A", "ano", "Ano", "ANO", "anos", "Anos", "ANOS"]
+        },
+        "decade": {
+            "scale": 315360000.0,
+            "singular": "decada",
+            "plural": "decadas",
+            "terms": ["D", "dec", "Dec", "DEC", "decs", "Decs", "DECS", "decada", "Decada", "DECADA", "decadas", "Decadas", "DECADAS"]
+        },
+        "century": {
+            "scale": 3153600000.0,
+            "singular": "siglo",
+            "plural": "siglos",
+            "terms": ["c", "C", "siglo", "Siglo", "SIGLO", "siglos", "Siglos", "SIGLOS"]
+        }
+    },
     "numerals": {
         "zero": {
             "type": "DIGIT",
@@ -253,103 +316,41 @@
             "terms": ["billon", "Billon", "BILLON", "billons", "Billons", "BILLONS", "billones", "Billones", "BILLONES"]
         },
         "full": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": 1.0,
             "terms": ["completo", "Completo", "COMPLETO", "completos", "Completos", "COMPLETOS", "completa", "Completa", "COMPLETA", "completas", "Completas", "COMPLETAS", "total", "Total", "TOTAL", "totales", "Totales", "TOTALES", "lleno", "Lleno", "LLENO", "llenos", "Llenos", "LLENOS", "llena", "Llena", "LLENA", "llenas", "Llenas", "LLENAS", "entero", "Entero", "ENTERO", "enteros", "Enteros", "ENTEROS", "entera", "Entera", "ENTERA", "enteras", "Enteras", "ENTERAS", "todo", "Todo", "TODO", "todos", "Todos", "TODOS", "toda", "Toda", "TODA", "todas", "Todas", "TODAS"]
         },
         "half": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": 0.5,
             "terms": ["medio", "Medio", "MEDIO", "medios", "Medios", "MEDIOS", "media", "Media", "MEDIA", "medias", "Medias", "MEDIAS", "mitad", "Mitad", "MITAD", "mitads", "Mitads", "MITADS"]
         },
         "third": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": "1/3",
             "terms": ["tercio", "Tercio", "TERCIO", "tercios", "Tercios", "TERCIOS", "tercero", "Tercero", "TERCERO", "terceros", "Terceros", "TERCEROS", "tercera", "Tercera", "TERCERA", "terceras", "Terceras", "TERCERAS"]
         },
         "quarter": {
-            "type": "MODIFIER",
+            "type": "MULTIPLIER",
             "value": 0.25,
             "terms": ["cuarto", "Cuarto", "CUARTO", "cuartos", "Cuartos", "CUARTOS"]
         },
-        "multiplier": {
-            "type": "MULTIPLIER",
+        "operator": {
+            "type": "OPERATOR",
             "value": -1.0,
             "terms": ["de", "De", "DE", "veces", "Veces", "VECES", "por", "Por", "POR"]
         }
     },
-    "scales": {
-        "millisecond": {
-            "scale": 0.001,
-            "singular": "milisegundo",
-            "plural": "milisegundos",
-            "terms": ["ms", "Ms", "MS", "milisegundo", "Milisegundo", "MILISEGUNDO", "milisegundos", "Milisegundos", "MILISEGUNDOS"]
-        },
-        "second": {
-            "scale": 1.0,
-            "singular": "segundo",
-            "plural": "segundos",
-            "terms": ["s", "S", "seg", "Seg", "SEG", "segs", "Segs", "SEGS", "segundo", "Segundo", "SEGUNDO", "segundos", "Segundos", "SEGUNDOS"]
-        },
-        "minute": {
-            "scale": 60.0,
-            "singular": "minuto",
-            "plural": "minutos",
-            "terms": ["m", "min", "Min", "MIN", "mins", "Mins", "MINS", "minuto", "Minuto", "MINUTO", "minutos", "Minutos", "MINUTOS"]
-        },
-        "hour": {
-            "scale": 3600.0,
-            "singular": "hora",
-            "plural": "horas",
-            "terms": ["h", "H", "hr", "Hr", "HR", "hrs", "Hrs", "HRS", "hora", "Hora", "HORA", "horas", "Horas", "HORAS"]
-        },
-        "day": {
-            "scale": 86400.0,
-            "singular": "dia",
-            "plural": "dias",
-            "terms": ["d", "dia", "Dia", "DIA", "dias", "Dias", "DIAS"]
-        },
-        "week": {
-            "scale": 604800.0,
-            "singular": "semana",
-            "plural": "semanas",
-            "terms": ["sem", "Sem", "SEM", "semana", "Semana", "SEMANA", "semanas", "Semanas", "SEMANAS"]
-        },
-        "month": {
-            "scale": 2635200.0,
-            "singular": "mes",
-            "plural": "meses",
-            "terms": ["M", "mes", "Mes", "MES", "meses", "Meses", "MESES", "mo", "Mo", "MO", "mos", "Mos", "MOS"]
-        },
-        "year": {
-            "scale": 31536000.0,
-            "singular": "ano",
-            "plural": "anos",
-            "terms": ["a", "A", "ano", "Ano", "ANO", "anos", "Anos", "ANOS"]
-        },
-        "decade": {
-            "scale": 315360000.0,
-            "singular": "decada",
-            "plural": "decadas",
-            "terms": ["D", "dec", "Dec", "DEC", "decs", "Decs", "DECS", "decada", "Decada", "DECADA", "decadas", "Decadas", "DECADAS"]
-        },
-        "century": {
-            "scale": 3153600000.0,
-            "singular": "siglo",
-            "plural": "siglos",
-            "terms": ["c", "C", "siglo", "Siglo", "SIGLO", "siglos", "Siglos", "SIGLOS"]
-        }
-    },
+    "flags": [
+    ],
     "settings": {
-        "assume_seconds": "SINGLE",
+        "assume_scale": "SINGLE",
         "limit_allowed_terms": true,
         "allow_duplicate_scales": true,
         "allow_thousands_extra_digits": false,
         "allow_thousands_lacking_digits": false,
         "allow_decimals_lacking_digits": true
     },
-    "flags": [
-    ],
     "extra_data": {
     }
 }
