@@ -360,7 +360,7 @@ class TimeLength:
         return self._convert_to_hhmmss(self.result.seconds)
 
     def __repr__(self) -> str:
-        """Return a string representation of `self` with attributes included."""
+        """Return a string representation of the TimeLength with attributes included."""
         return f"TimeLength(content={repr(self.content)}, locale={repr(self.locale)})"
 
     def __add__(self, other: TimeLength | timedelta | float | int) -> TimeLength:
@@ -749,8 +749,9 @@ class TimeLength:
         """Return `self` unchanged as `TimeLength` is an absolute measurement."""
         return self
 
-    def __neg__(self):
-        return NotImplemented
+    def __neg__(self) -> TimeLength:
+        """Return `self` unchanged as `TimeLength` is an absolute measurement."""
+        return self
 
     def __invert__(self):
         return NotImplemented

@@ -46,7 +46,7 @@ class Scale:
             return "(" + ", ".join([json.dumps(term) for term in tup]) + ")"
 
         terms_str = tuple_to_str(self.terms)
-        return f"""Scale(scale={self.scale}, singular={json.dumps(self.singular)}, plural={json.dumps(self.plural)}, terms={terms_str}, enabled={self.enabled})"""
+        return f"Scale(scale={self.scale}, singular={json.dumps(self.singular)}, plural={json.dumps(self.plural)}, terms={terms_str}, enabled={self.enabled})"
 
     def __eq__(self, value: object) -> bool:
         """Return whether the scale is equal to the value."""
@@ -167,7 +167,7 @@ class ParsedTimeLength:
         return "Success" if self.success else "Failure"
 
     def __repr__(self) -> str:
-        """Return a string representation of the `ParsedTimeLength` with attributes included."""
+        """Return a string representation of the ParsedTimeLength with attributes included."""
 
         def tuple_to_str(tup: tuple) -> str:
             return (
@@ -187,7 +187,7 @@ class ParsedTimeLength:
 
         valid_str = tuple_to_str(self.valid)
         invalid_str = tuple_to_str(self.invalid)
-        return f"""ParsedTimeLength(success={self.success}, seconds={self.seconds}, invalid={invalid_str}, valid={valid_str})"""
+        return f"ParsedTimeLength(success={self.success}, seconds={self.seconds}, invalid={invalid_str}, valid={valid_str})"
 
 
 @dataclass
@@ -202,9 +202,11 @@ class Buffer:
     value: str = ""
 
     def __str__(self) -> str:
+        """Return the current value of the buffer."""
         return self.value
 
     def __repr__(self) -> str:
+        """Return a string representation of the buffer with attributes included."""
         return f'Buffer(value="{self.value}")'
 
 
@@ -243,6 +245,7 @@ class ParserSettings:
     allow_decimals_lacking_digits: bool = True
 
     def __str__(self) -> str:
+        """Return the settings as either 'Default' or 'Modified' based on the default values."""
         return (
             "Modified"
             if any(
@@ -259,6 +262,7 @@ class ParserSettings:
         )
 
     def __repr__(self) -> str:
+        """Return a string representation of the ParserSettings with attributes included."""
         return (
             f'ParserSettings(assume_scale="{self.assume_scale}", '
             + f"limit_allowed_terms={self.limit_allowed_terms}, "

@@ -636,7 +636,7 @@ def test_timelength_dunder_methods():
     assert len(tl_invalid) == 7
     assert abs(tl) == TimeLength(content = "5 minutes", locale = English())
     assert +(tl) == TimeLength(content = "5 minutes", locale = English())
-    assert -(tl) == NotImplemented
+    assert -(tl) == TimeLength(content = "5 minutes", locale = English())
     assert ~(tl) == NotImplemented
     
     assert other_tl > tl

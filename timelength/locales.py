@@ -484,12 +484,12 @@ class Locale:
         return True
 
     def __str__(self) -> str:
-        """Return the name of `self`."""
+        """Return the name of the locale."""
         return self.__class__.__name__
 
     def __repr__(self) -> str:
-        """Return a string representation of `self` with attributes included."""
-        return f"""{self.__str__()}(config_location={json.dumps(self._config_location)}, flags={repr(self.flags)}, settings={repr(self.settings)})"""
+        """Return a string representation of the locale with attributes included."""
+        return f"{self.__str__()}(config_location={json.dumps(self._config_location)}, flags={repr(self.flags)}, settings={repr(self.settings)})"
 
 
 class English(Locale):
@@ -533,7 +533,7 @@ class English(Locale):
         super().__init__("english.json", flags, settings)
 
     def __repr__(self) -> str:
-        """Return a string representation of `self` with attributes included."""
+        """Return a string representation of the locale with attributes included."""
         return f"English(flags={repr(self.flags)}, settings={repr(self.settings)})"
 
 
@@ -578,7 +578,7 @@ class Spanish(Locale):
         super().__init__("spanish.json", flags, settings)
 
     def __repr__(self) -> str:
-        """Return a string representation of self with attributes included."""
+        """Return a string representation of the locale with attributes included."""
         return f"Spanish(flags={repr(self.flags)}, settings={repr(self.settings)})"
 
 
@@ -615,5 +615,5 @@ class Guess:
         return self.__class__.__name__
 
     def __repr__(self) -> str:
-        """Return a string representation of self with attributes included."""
+        """Return a string representation of the Guess with attributes included."""
         return f"Guess(flags={f'{repr(self.flags)}' if self.flags else None}, settings={repr(self.settings) if self.settings else None})"
