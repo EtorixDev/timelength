@@ -1,8 +1,8 @@
 # timelength
-<!-- [![](https://img.shields.io/pypi/v/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
-[![](https://img.shields.io/pypi/pyversions/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/) -->
+[![](https://img.shields.io/pypi/v/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
+[![](https://img.shields.io/pypi/pyversions/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
 [![](https://img.shields.io/pypi/dm/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
-[![](https://img.shields.io/github/actions/workflow/status/EtorixDev/timelength/tests.yml?branch=3.0.0-dev&style=flat-square&color=51a851)](https://github.com/EtorixDev/timelength)
+[![](https://img.shields.io/github/actions/workflow/status/EtorixDev/timelength/tests.yml?branch=main&style=flat-square&color=51a851)](https://github.com/EtorixDev/timelength)
 [![](https://img.shields.io/badge/coverage-100%25-41c241?style=flat-square&color=51a851)](https://github.com/EtorixDev/timelength)
 [![](https://img.shields.io/pypi/l/timelength.svg?style=flat-square&color=51a851)](https://pypi.org/project/timelength/)
 
