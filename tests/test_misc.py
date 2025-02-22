@@ -461,7 +461,7 @@ def test_timelength():
     tl.parse(guess_locale=True)
     assert isinstance(tl.locale, Spanish)
     assert tl._convert_to_hhmmss(tl.result.seconds) == "00:05:00"
-    assert repr(tl) == 'TimeLength(content=\'5 minutos\', locale=Spanish(flags=(FailureFlags.NONE), settings=ParserSettings(assume_scale="SINGLE", limit_allowed_terms=True, allow_duplicate_scales=True, allow_thousands_extra_digits=False, allow_thousands_lacking_digits=False, allow_decimals_lacking_digits=True)))'
+    assert repr(tl) == 'TimeLength(content="5 minutos", locale=Spanish(flags=(FailureFlags.NONE), settings=ParserSettings(assume_scale="SINGLE", limit_allowed_terms=True, allow_duplicate_scales=True, allow_thousands_extra_digits=False, allow_thousands_lacking_digits=False, allow_decimals_lacking_digits=True)))'
 
     # Matches both English and Spanish
     tl.content = "5 min"

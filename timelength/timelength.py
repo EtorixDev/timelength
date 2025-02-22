@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 
@@ -361,7 +362,7 @@ class TimeLength:
 
     def __repr__(self) -> str:
         """Return a string representation of the TimeLength with attributes included."""
-        return f"TimeLength(content={repr(self.content)}, locale={repr(self.locale)})"
+        return f"TimeLength(content={json.dumps(self.content)}, locale={repr(self.locale)})"
 
     def __add__(self, other: TimeLength | timedelta | float | int) -> TimeLength:
         """---

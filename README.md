@@ -1,4 +1,4 @@
-# timelength
+# [timelength](https://github.com/EtorixDev/timelength)
 [![](https://img.shields.io/pypi/v/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
 [![](https://img.shields.io/pypi/pyversions/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
 [![](https://img.shields.io/pypi/dm/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)

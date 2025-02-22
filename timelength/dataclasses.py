@@ -207,7 +207,7 @@ class Buffer:
 
     def __repr__(self) -> str:
         """Return a string representation of the buffer with attributes included."""
-        return f'Buffer(value="{self.value}")'
+        return f'Buffer(value={json.dumps(self.value)})'
 
 
 @dataclass
