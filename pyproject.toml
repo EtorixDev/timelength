@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "timelength"
-version = "3.0.0"
+version = "3.0.1"
 description = "A flexible python duration parser designed for human readable lengths of time."
 authors = ["Etorix <admin@etorix.dev>"]
 license = "MIT"
@@ -23,16 +23,15 @@ include = ["timelength/locales/*.json"]
 python = "^3.9"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.9.6"
-pytest = "^8.3.4"
-pytest-cov = "^6.0.0"
+ruff = "^0.9.10"
+pytest = "^8.3.5"
+pytest-cov = "^6.1.1"
 pytest-mock = "^3.14.0"
-tox = "^4.24.1"
+tox = "^4.25.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-exclude = ["tests"]
 line-length = 120

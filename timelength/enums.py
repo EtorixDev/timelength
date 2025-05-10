@@ -129,4 +129,9 @@ class FailureFlags(IntFlag):
         return " | ".join(self._get_flags()).replace("FailureFlags.", "") or "NONE"
 
     def __repr__(self) -> str:
-        return "(" + (" | ".join(self._get_flags()) or "FailureFlags.NONE") + ")"
+        flags = self._get_flags()
+        return (
+            ("(" if len(flags) > 1 else "")
+            + (" | ".join(flags) or "FailureFlags.NONE")
+            + (")" if len(flags) > 1 else "")
+        )

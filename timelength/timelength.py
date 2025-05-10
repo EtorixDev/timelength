@@ -606,15 +606,15 @@ class TimeLength:
         else:
             return NotImplemented
 
-    def __mod__(self, other: TimeLength | timedelta) -> TimeLength:
+    def __mod__(self, other: TimeLength | timedelta | float | int) -> TimeLength:
         """
-        Get the absolute modulo of `self` and a `TimeLength` or `timedelta`.
+        Get the absolute modulo of `self` and a `TimeLength`, `timedelta`, or a number.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to modulo `self` by.
+        - other: `TimeLength | timedelta | float | int` — The object to modulo `self` by.
 
         #### Returns
-        - A `TimeLength` that represents the modulo of `self` and the passed `TimeLength` or `timedelta`.
+        - A `TimeLength` that represents the modulo of `self` and the passed `TimeLength`, `timedelta`, or number.
 
         #### Raises
         - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
@@ -630,6 +630,11 @@ class TimeLength:
         elif isinstance(other, timedelta):
             return TimeLength(
                 content=f"{abs(self.result.seconds % other.total_seconds()) / base.scale} {base.terms[0]}",
+                locale=deepcopy(self.locale),
+            )
+        elif isinstance(other, (float, int)):
+            return TimeLength(
+                content=f"{abs(self.result.seconds % other) / base.scale} {base.terms[0]}",
                 locale=deepcopy(self.locale),
             )
         else:
@@ -657,16 +662,16 @@ class TimeLength:
         else:
             return NotImplemented
 
-    def __divmod__(self, other: TimeLength | timedelta) -> tuple[float, TimeLength]:
+    def __divmod__(self, other: TimeLength | timedelta | float | int) -> tuple[float, TimeLength]:
         """
-        Get the divmod of `self` and a `TimeLength` or `timedelta`.
+        Get the divmod of `self` and a `TimeLength`, `timedelta`, or a number.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to divmod `self` by.
+        - other: `TimeLength | timedelta | float | int` — The object to divmod `self` by.
 
         #### Returns
         - A tuple of a `float` and an absolute `TimeLength` that represent the divmod of `self` and the passed
-            `TimeLength` or `timedelta`.
+            `TimeLength`, `timedelta`, or number.
         """
 
         if isinstance(other, TimeLength):
@@ -677,6 +682,11 @@ class TimeLength:
         elif isinstance(other, timedelta):
             return (
                 self.result.seconds // other.total_seconds(),
+                self % other,
+            )
+        elif isinstance(other, (float, int)):
+            return (
+                self.result.seconds // other,
                 self % other,
             )
         else:
@@ -701,13 +711,13 @@ class TimeLength:
         else:
             return NotImplemented
 
-    def __pow__(self, other: float | int, mod: TimeLength | timedelta | None = None) -> TimeLength:
+    def __pow__(self, other: float | int, mod: TimeLength | timedelta | float | int | None = None) -> TimeLength:
         """
         Get the absolute power of `self` and a number.
 
         #### Arguments
         - other: `float | int` — The number to raise `self` to.
-        - mod: `TimeLength | timedelta = None` — The object to modulo the result by.
+        - mod: `TimeLength | timedelta | float | int = None` — The object to modulo the result by.
 
         #### Returns
         - A `TimeLength` that represents the absolute power of `self` and the passed number, optionally moduloed by mod.
@@ -718,13 +728,19 @@ class TimeLength:
 
         if not isinstance(other, (float, int)):
             return NotImplemented
-        elif mod is not None and not isinstance(mod, (TimeLength, timedelta)):
+        elif mod is not None and not isinstance(mod, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
         if not mod:
             result: float = abs(self.result.seconds**other)
         else:
-            mod_seconds: float = mod.result.seconds if isinstance(mod, TimeLength) else mod.total_seconds()
+            mod_seconds: float = (
+                mod.result.seconds
+                if isinstance(mod, TimeLength)
+                else mod.total_seconds()
+                if isinstance(mod, timedelta)
+                else mod
+            )
             result: float = abs(self.result.seconds**other) % mod_seconds
 
         base = self.locale.base_scale
@@ -754,101 +770,146 @@ class TimeLength:
         """Return `self` unchanged as `TimeLength` is an absolute measurement."""
         return self
 
-    def __invert__(self):
-        return NotImplemented
-
-    def __gt__(self, other: TimeLength | timedelta) -> bool:
+    def __gt__(self, other: TimeLength | timedelta | float | int) -> bool:
         """
         Check if `self` is greater than `other`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to compare to.
+        - other: `TimeLength | timedelta | float | int` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is greater than `other` based on their seconds.
         """
 
-        if not isinstance(other, (TimeLength, timedelta)):
+        if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        return self.result.seconds > (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
+        other_seconds = (
+            other.result.seconds
+            if isinstance(other, TimeLength)
+            else other.total_seconds()
+            if isinstance(other, timedelta)
+            else other
+        )
 
-    def __ge__(self, other: TimeLength | timedelta) -> bool:
+        return self.result.seconds > other_seconds
+
+    def __ge__(self, other: TimeLength | timedelta | float | int) -> bool:
         """
         Check if `self` is greater than or equal to other.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to compare to.
+        - other: `TimeLength | timedelta | float | int` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is greater than or equal to `other` based on their seconds.
         """
 
-        if not isinstance(other, (TimeLength, timedelta)):
+        if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        return self.result.seconds >= (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
+        other_seconds = (
+            other.result.seconds
+            if isinstance(other, TimeLength)
+            else other.total_seconds()
+            if isinstance(other, timedelta)
+            else other
+        )
 
-    def __lt__(self, other: TimeLength | timedelta) -> bool:
+        return self.result.seconds >= other_seconds
+
+    def __lt__(self, other: TimeLength | timedelta | float | int) -> bool:
         """
         Check if `self` is less than `other`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to compare to.
+        - other: `TimeLength | timedelta | float | int` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is less than `other` based on their seconds.
         """
 
-        if not isinstance(other, (TimeLength, timedelta)):
+        if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        return self.result.seconds < (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
+        other_seconds = (
+            other.result.seconds
+            if isinstance(other, TimeLength)
+            else other.total_seconds()
+            if isinstance(other, timedelta)
+            else other
+        )
 
-    def __le__(self, other: TimeLength | timedelta) -> bool:
+        return self.result.seconds < other_seconds
+
+    def __le__(self, other: TimeLength | timedelta | float | int) -> bool:
         """
         Check if `self` is less than or equal to `other`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to compare to.
+        - other: `TimeLength | timedelta | float | int` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is less than or equal to `other` based on their seconds.
         """
 
-        if not isinstance(other, (TimeLength, timedelta)):
+        if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        return self.result.seconds <= (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
+        other_seconds = (
+            other.result.seconds
+            if isinstance(other, TimeLength)
+            else other.total_seconds()
+            if isinstance(other, timedelta)
+            else other
+        )
+
+        return self.result.seconds <= other_seconds
 
     def __eq__(self, other: object) -> bool:
         """
         Check if `self` is equal to `other`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to compare to.
+        - other: `TimeLength | timedelta | float | int` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is equal to `other` based on their seconds.
         """
 
-        if not isinstance(other, (TimeLength, timedelta)):
+        if not isinstance(other, (TimeLength, timedelta, float, int)):
             return False
 
-        return self.result.seconds == (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
+        other_seconds = (
+            other.result.seconds
+            if isinstance(other, TimeLength)
+            else other.total_seconds()
+            if isinstance(other, timedelta)
+            else other
+        )
+
+        return self.result.seconds == other_seconds
 
     def __ne__(self, other: object) -> bool:
         """
         Check if `self` is not equal to `other`.
 
         #### Arguments
-        - other: `TimeLength | timedelta` — The object to compare to.
+        - other: `TimeLength | timedelta | float | int` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is not equal to `other` based on their seconds.
         """
 
-        if not isinstance(other, (TimeLength, timedelta)):
+        if not isinstance(other, (TimeLength, timedelta, float, int)):
             return True
 
-        return self.result.seconds != (other.result.seconds if isinstance(other, TimeLength) else other.total_seconds())
+        other_seconds = (
+            other.result.seconds
+            if isinstance(other, TimeLength)
+            else other.total_seconds()
+            if isinstance(other, timedelta)
+            else other
+        )
+
+        return self.result.seconds != other_seconds

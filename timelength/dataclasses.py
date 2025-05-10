@@ -177,7 +177,7 @@ class ParsedTimeLength:
                         tuple_to_str(term)
                         if isinstance(term, tuple)
                         else repr(term)
-                        if isinstance(term, Scale)
+                        if isinstance(term, (Scale, FailureFlags))
                         else json.dumps(term)
                         for term in tup
                     ]
@@ -207,7 +207,7 @@ class Buffer:
 
     def __repr__(self) -> str:
         """Return a string representation of the buffer with attributes included."""
-        return f'Buffer(value={json.dumps(self.value)})'
+        return f"Buffer(value={json.dumps(self.value)})"
 
 
 @dataclass
