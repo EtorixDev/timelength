@@ -589,7 +589,13 @@ class Guess:
     Does not contain any of the attributes of a `Locale`. Should never be used as a final
     `Locale`, but instead as an intermediary until a `Locale` is determined.
 
-    #### Arguments
+    #### Attributes
+    - locales: `list[Locale]` — A list of all available `Locale` contexts.
+        - Each `Locale` is automatically initialized with `self`.
+        - Custom locales can be appended to this list. Access `self.flags` and `self.settings`
+            to use the same flags and settings as the other locales.
+
+    #### Properties
     - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
         - If not `None`, flags loaded from the config will be overwritten.
         - Will be passed to each `Locale` in `self.locales` during initialization.
@@ -600,11 +606,6 @@ class Guess:
         - Will be passed to each `Locale` in `self.locales` during initialization.
         - Access each `Locale` in `self.locales` to set individually customized settings,
             or to update the settings post-initialization.
-
-    #### Attributes
-    - locales: `list[Locale]` — A list of all available `Locale` contexts.
-        - Each `Locale` is automatically initialized with `self`.
-        - Custom locales can be appended to this list.
 
     #### Raises
     - `InvalidLocaleError` if any of the `Locale` configs are malformed or missing.
@@ -622,10 +623,20 @@ class Guess:
             Spanish(flags=flags, settings=settings),
         ]
 
+    @property
+    def flags(self) -> FailureFlags | None:
+        """Return the flags for the Guess."""
+        return self._flags
+
+    @property
+    def settings(self) -> ParserSettings | None:
+        """Return the settings for the Guess."""
+        return self._settings
+
     def __str__(self) -> str:
         """Return the name of self."""
         return self.__class__.__name__
 
     def __repr__(self) -> str:
         """Return a string representation of the Guess with attributes included."""
-        return f"Guess(flags={f'{repr(self._flags)}' if self._flags else None}, settings={repr(self._settings) if self._settings else None})"
+        return f"Guess(flags={f'{repr(self.flags)}' if self.flags else None}, settings={repr(self.settings) if self.settings else None})"
