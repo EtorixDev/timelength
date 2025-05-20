@@ -593,12 +593,16 @@ class Guess:
     - locales: `list[Locale]` — A list of all available `Locale` contexts.
         - Each `Locale` is automatically initialized with `self`.
         - Custom locales can be appended to this list.
+
+    #### Properties
     - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
         - If not `None`, flags loaded from the config will be overwritten.
         - Will be passed to each `Locale` in `self.locales`.
+        - Access each `Locale` in `self.locales` to set individually customized flags.
     - settings: `ParserSettings | None = None` — The settings for the parser.
         - If not `None`, settings loaded from the config will be overwritten.
         - Will be passed to each `Locale` in `self.locales`.
+        - Access each `Locale` in `self.locales` to set individually customized settings.
 
     #### Raises
     - `InvalidLocaleError` if any of the `Locale` configs are malformed or missing.
@@ -609,26 +613,22 @@ class Guess:
         flags: FailureFlags | None = None,
         settings: ParserSettings | None = None,
     ) -> None:
-        self.flags: FailureFlags | None = flags
-        self.settings: ParserSettings | None = settings
-        self._locales: list[Locale] = [
+        self._flags: FailureFlags | None = flags
+        self._settings: ParserSettings | None = settings
+        self.locales: list[Locale] = [
             English(flags=flags, settings=settings),
             Spanish(flags=flags, settings=settings),
         ]
 
     @property
-    def locales(self) -> list[Locale]:
-        """Return the list of all available `Locale` contexts."""
-        for locale in self._locales:
-            locale.flags = self.flags if self.flags is not None else locale.flags
-            locale.settings = self.settings if self.settings is not None else locale.settings
+    def flags(self) -> FailureFlags | None:
+        """Return the flags for the Guess."""
+        return self._flags
 
-        return self._locales
-
-    @locales.setter
-    def locales(self, value: list[Locale]) -> None:
-        """Set the list of all available `Locale` contexts."""
-        self._locales = value
+    @property
+    def settings(self) -> ParserSettings | None:
+        """Return the settings for the Guess."""
+        return self._settings
 
     def __str__(self) -> str:
         """Return the name of self."""
