@@ -205,15 +205,15 @@ If you have any custom locales you would like to be included in the possible res
     - `timedelta` // `TimeLength` -> `float`
 
 6. **Modulo**
-    - `TimeLength` % `TimeLength` or `timedelta` -> `TimeLength`
+    - `TimeLength` % `TimeLength` or `timedelta` or number -> `TimeLength`
     - `timedelta` % `TimeLength` -> `timedelta`
 
 7. **Divmod**
-    - `divmod(TimeLength, TimeLength or timedelta)` -> `tuple[float, TimeLength]`
+    - `divmod(TimeLength, TimeLength or timedelta or number)` -> `tuple[float, TimeLength]`
     - `divmod(timedelta, TimeLength)` -> `tuple[float, timedelta]`
 
 8. **Power**
-    - `TimeLength` ** number -> `TimeLength` (optionally moduloed by `TimeLength` or `timedelta`)
+    - `TimeLength` ** number -> `TimeLength` (optionally moduloed by `TimeLength` or `timedelta` or number)
 
 9. **Comparisons**
     - `TimeLength` > `TimeLength` or `timedelta` -> `bool`

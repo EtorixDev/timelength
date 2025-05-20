@@ -49,12 +49,12 @@ class TimeLength:
     ```
     """
 
-    def __init__(self, content: str, locale: Locale | Guess = English()) -> None:
+    def __init__(self, content: str, locale: Locale | Guess | None = None) -> None:
         self.content: str = str(content)
 
         # self.locale must always be a Locale, so if Guess is passed, temporarily set it to the first
         # locale in Guess().locales to prevent a wasted initialization while the best locale is found.
-        self.locale: Locale = locale.locales[0] if isinstance(locale, Guess) else locale
+        self.locale: Locale = locale.locales[0] if isinstance(locale, Guess) else (locale or English())
 
         if not isinstance(self.locale, Locale):
             raise NotALocaleError(locale)
@@ -78,10 +78,6 @@ class TimeLength:
         - guess_locale: `bool | Guess = False` — Attempt each `Locale` and keep the best result.
             - The best result is the one with the least invalid results.
             - Pass an existing instance of `Guess` to prevent re-initializing every locale in `Guess().locales`.
-            - Custom locales can be added to the pool by appending them to `Guess().locales` in the passed `Guess`.
-            - Flags or settings passed to `Guess` will be used for each locale. If none are passed, the default for
-                each locale will be used.
-            - To use different flags or settings for each locale, access `Guess().locales` and set them individually.
 
         #### Updates
         - `self.result` with the outcome of parsing.
@@ -95,9 +91,6 @@ class TimeLength:
             results: list[tuple[ParsedTimeLength, Locale]] = []
 
             for locale in guess.locales:
-                locale.flags = guess.flags if guess.flags is not None else locale.flags
-                locale.settings = guess.settings if guess.settings is not None else locale.settings
-
                 results.append((self._parse_locale(locale), locale))
 
             # Sort most invalid to least invalid, breaking ties by least valid to most valid,
@@ -106,7 +99,8 @@ class TimeLength:
                 key=lambda res: (len(res[0].invalid), -len(res[0].valid), res[1].__class__.__name__), reverse=True
             )
 
-            self._result, self.locale = results[-1]
+            self._result = results[-1][0]
+            self.locale = deepcopy(results[-1][1])
 
     def ago(self, base: datetime = datetime.now(timezone.utc)) -> datetime:
         """---

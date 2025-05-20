@@ -498,9 +498,9 @@ class English(Locale):
 
     #### Attributes
     - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
-        - If passed, flags loaded from the config will be overwritten.
+        - If not `None`, flags loaded from the config will be overwritten.
     - settings: `ParserSettings | None = None` — The settings for the parser.
-        - If passed, settings loaded from the config will be overwritten.
+        - If not `None`, settings loaded from the config will be overwritten.
 
     #### Properties
     - `parser` — Return the parser function attached to the Locale.
@@ -543,9 +543,9 @@ class Spanish(Locale):
 
     #### Attributes
     - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
-        - If passed, flags loaded from the config will be overwritten.
+        - If not `None`, flags loaded from the config will be overwritten.
     - settings: `ParserSettings | None = None` — The settings for the parser.
-        - If passed, settings loaded from the config will be overwritten.
+        - If not `None`, settings loaded from the config will be overwritten.
 
     #### Properties
     - `parser` — Return the parser function attached to the Locale.
@@ -586,16 +586,19 @@ class Guess:
     """---
     Represents an unknown `Locale` context used for parsing lengths of time.
 
-    Does not contain any of the attributes of a `Locale`. Should never be used as a final `Locale`, but instead as an
-    intermediary until a `Locale` is determined.
+    Does not contain any of the attributes of a `Locale`. Should never be used as a final
+    `Locale`, but instead as an intermediary until a `Locale` is determined.
 
     #### Attributes
-    - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
-        - If passed, flags loaded from the config will be overwritten.
-    - settings: `ParserSettings | None = None` — The settings for the parser.
-        - If passed, settings loaded from the config will be overwritten.
     - locales: `list[Locale]` — A list of all available `Locale` contexts.
-        - Each `Locale` is initialized with `self`.
+        - Each `Locale` is automatically initialized with `self`.
+        - Custom locales can be appended to this list.
+    - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
+        - If not `None`, flags loaded from the config will be overwritten.
+        - Will be passed to each `Locale` in `self.locales`.
+    - settings: `ParserSettings | None = None` — The settings for the parser.
+        - If not `None`, settings loaded from the config will be overwritten.
+        - Will be passed to each `Locale` in `self.locales`.
 
     #### Raises
     - `InvalidLocaleError` if any of the `Locale` configs are malformed or missing.
@@ -608,7 +611,24 @@ class Guess:
     ) -> None:
         self.flags: FailureFlags | None = flags
         self.settings: ParserSettings | None = settings
-        self.locales: list[Locale] = [English(), Spanish()]
+        self._locales: list[Locale] = [
+            English(flags=flags, settings=settings),
+            Spanish(flags=flags, settings=settings),
+        ]
+
+    @property
+    def locales(self) -> list[Locale]:
+        """Return the list of all available `Locale` contexts."""
+        for locale in self._locales:
+            locale.flags = self.flags if self.flags is not None else locale.flags
+            locale.settings = self.settings if self.settings is not None else locale.settings
+
+        return self._locales
+
+    @locales.setter
+    def locales(self, value: list[Locale]) -> None:
+        """Set the list of all available `Locale` contexts."""
+        self._locales = value
 
     def __str__(self) -> str:
         """Return the name of self."""
