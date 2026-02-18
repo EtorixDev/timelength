@@ -401,6 +401,9 @@ def test_locale_str_repr():
     assert str(guess) == "Guess"
     assert repr(guess) == "Guess(flags=None, settings=None)"
 
+    guess_none_flag = Guess(flags=FailureFlags.NONE)
+    assert repr(guess_none_flag) == "Guess(flags=FailureFlags.NONE, settings=None)"
+
 
 def test_timelength():
     with pytest.raises(NotALocaleError):
@@ -461,6 +464,10 @@ def test_timelength_conversions():
     assert tl.to_decades() == 3153600000 / 60 / 60 / 24 / 365 / 10
     assert tl.to_centuries() == 1
 
+    tl_precise = TimeLength(content="90 seconds", locale=English())
+    assert tl_precise.to_minutes() == 1.5
+    assert tl_precise.to_minutes(max_precision=0) == 2.0
+
     tl.locale.minute.scale = 0
 
     with pytest.raises(InvalidScaleError):
@@ -478,6 +485,7 @@ def test_timelength_dunder_methods():
     td_5_minutes = timedelta(minutes=5)
     td_10_seconds = timedelta(seconds=10)
     td_10_minutes = timedelta(minutes=10)
+    td_zero = timedelta(seconds=0)
     dt_now = datetime.now(tz=timezone.utc)
     seven = 7
     hundred = 100
@@ -548,6 +556,15 @@ def test_timelength_dunder_methods():
         with pytest.raises(TypeError):
             _ = tl_5_minutes / unsupported
 
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes / tl_zero
+
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes / td_zero
+
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes / 0
+
     # Right True Division
     assert isinstance((res := td_10_minutes / tl_5_minutes), float) and res == 600 / 300
     assert tl_5_minutes.__rtruediv__(buffer) is NotImplemented
@@ -557,6 +574,9 @@ def test_timelength_dunder_methods():
     for unsupported in (buffer, hundred, dt_now):
         with pytest.raises(TypeError):
             _ = unsupported / tl_5_minutes
+
+    with pytest.raises(ZeroDivisionError):
+        _ = td_10_minutes / tl_zero
 
     # Left Floor Division
     assert isinstance((res := tl_5_minutes // tl_10_minutes), int) and res == 300 // 600
@@ -569,6 +589,15 @@ def test_timelength_dunder_methods():
         with pytest.raises(TypeError):
             _ = tl_5_minutes // unsupported
 
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes // tl_zero
+
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes // td_zero
+
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes // 0
+
     # Right Floor Division
     assert isinstance((res := td_10_minutes // tl_5_minutes), int) and res == 600 // 300
     assert tl_5_minutes.__rfloordiv__(buffer) is NotImplemented
@@ -578,6 +607,9 @@ def test_timelength_dunder_methods():
     for unsupported in (buffer, hundred, dt_now):
         with pytest.raises(TypeError):
             _ = unsupported // tl_5_minutes
+
+    with pytest.raises(ZeroDivisionError):
+        _ = td_10_minutes // tl_zero
 
     # Left Modulus
     assert isinstance((res := tl_5_minutes % tl_10_minutes), TimeLength) and res.result.seconds == 300 % 600
@@ -590,6 +622,15 @@ def test_timelength_dunder_methods():
         with pytest.raises(TypeError):
             _ = tl_5_minutes % unsupported
 
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes % tl_zero
+
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes % td_zero
+
+    with pytest.raises(ZeroDivisionError):
+        _ = tl_5_minutes % 0
+
     # Right Modulus
     assert isinstance((res := td_10_minutes % tl_5_minutes), timedelta) and res.total_seconds() == 600 % 300
     assert tl_5_minutes.__rmod__(buffer) is NotImplemented
@@ -599,6 +640,9 @@ def test_timelength_dunder_methods():
     for unsupported in (buffer, hundred, dt_now):
         with pytest.raises(TypeError):
             _ = unsupported % tl_5_minutes
+
+    with pytest.raises(ZeroDivisionError):
+        _ = td_10_minutes % tl_zero
 
     # Left Divmod
     assert isinstance((res := divmod(tl_5_minutes, tl_10_minutes)), tuple) and len(res) == 2 and res[0] == 300 // 600 and isinstance(res[1], TimeLength) and res[1].result.seconds == 300 % 600
@@ -611,6 +655,15 @@ def test_timelength_dunder_methods():
         with pytest.raises(TypeError):
             _ = divmod(tl_5_minutes, unsupported)
 
+    with pytest.raises(ZeroDivisionError):
+        _ = divmod(tl_5_minutes, tl_zero)
+
+    with pytest.raises(ZeroDivisionError):
+        _ = divmod(tl_5_minutes, td_zero)
+
+    with pytest.raises(ZeroDivisionError):
+        _ = divmod(tl_5_minutes, 0)
+
     # Right Divmod
     assert isinstance((res := divmod(td_10_minutes, tl_5_minutes)), tuple) and len(res) == 2 and res[0] == 600 // 300 and isinstance(res[1], timedelta) and res[1].total_seconds() == 600 % 300
     assert tl_5_minutes.__rdivmod__(buffer) is NotImplemented
@@ -620,6 +673,9 @@ def test_timelength_dunder_methods():
     for unsupported in (buffer, hundred, dt_now):
         with pytest.raises(TypeError):
             _ = divmod(unsupported, tl_5_minutes)
+
+    with pytest.raises(ZeroDivisionError):
+        _ = divmod(td_10_minutes, tl_zero)
 
     # Left Power
     assert isinstance((res := tl_5_seconds**seven), TimeLength) and res.result.seconds == 5**7
@@ -634,6 +690,15 @@ def test_timelength_dunder_methods():
     for unsupported in (buffer, dt_now, td_10_minutes, tl_10_seconds):
         with pytest.raises(TypeError):
             _ = tl_5_seconds**unsupported
+
+    with pytest.raises(ValueError):
+        _ = pow(tl_5_seconds, seven, 0)
+
+    with pytest.raises(ValueError):
+        _ = pow(tl_5_seconds, seven, td_zero)
+
+    with pytest.raises(ValueError):
+        _ = pow(tl_5_seconds, seven, tl_zero)
 
     # Right Power
     # This method was excluded from the class rather than returning NotImplemented to

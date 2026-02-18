@@ -639,4 +639,6 @@ class Guess:
 
     def __repr__(self) -> str:
         """Return a string representation of the Guess with attributes included."""
-        return f"Guess(flags={f'{repr(self.flags)}' if self.flags else None}, settings={repr(self.settings) if self.settings else None})"
+        flags_repr = repr(self.flags) if self.flags is not None else None
+        settings_repr = repr(self.settings) if self.settings is not None else None
+        return f"Guess(flags={flags_repr}, settings={settings_repr})"

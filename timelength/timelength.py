@@ -102,12 +102,12 @@ class TimeLength:
             self._result = results[-1][0]
             self.locale = deepcopy(results[-1][1])
 
-    def ago(self, base: datetime = datetime.now(timezone.utc)) -> datetime:
+    def ago(self, base: datetime | None = None) -> datetime:
         """---
         Get a `datetime` from the past.
 
         #### Arguments
-        - base: `datetime = datetime.now(timezone.utc)` — The relative time to subtract from.
+        - base: `datetime | None = None` — The relative time to subtract from. If `None`, defaults to `datetime.now(timezone.utc)`.
 
         #### Returns
         - A `datetime` representing `base` minus `self.result.delta`.
@@ -117,6 +117,9 @@ class TimeLength:
         - `PotentialDateTimeError` when the resultant `datetime` would exceed the supported bounds of `datetime`.
         """
 
+        if base is None:
+            base = datetime.now(timezone.utc)
+
         if self.result.delta is None:
             raise ParsedTimeDeltaError
         elif self._invalid_datetime(base, self.result.delta, subtract=True):
@@ -124,12 +127,12 @@ class TimeLength:
         else:
             return base - self.result.delta
 
-    def hence(self, base: datetime = datetime.now(timezone.utc)) -> datetime:
+    def hence(self, base: datetime | None = None) -> datetime:
         """---
         Get a `datetime` from the future.
 
         #### Arguments
-        - base: `datetime = datetime.now(timezone.utc)` — The relative time to add to.
+        - base: `datetime | None = None` — The relative time to add to. If `None`, defaults to `datetime.now(timezone.utc)`.
 
         #### Returns
         - A `datetime` representing `base` plus `self.result.delta`.
@@ -138,6 +141,9 @@ class TimeLength:
         - `ParsedTimeDeltaError` when `self.result` exceeds the supported bounds of `timedelta`.
         - `PotentialDateTimeError` when the resultant `datetime` would exceed the supported bounds of `datetime`.
         """
+
+        if base is None:
+            base = datetime.now(timezone.utc)
 
         if self.result.delta is None:
             raise ParsedTimeDeltaError
@@ -295,10 +301,13 @@ class TimeLength:
             raise InvalidScaleError(scale.singular)
         else:
             val = self.result.seconds / scale.scale
-            return round(val, max_precision) if max_precision else val
+            return round(val, max_precision) if max_precision is not None else val
 
     def _invalid_datetime(self, date: datetime, delta: timedelta, subtract: bool = False) -> bool:
         """Check if the resultant `datetime` would exceed the bounds supported by `datetime`."""
+
+        if date.tzinfo is None:
+            date = date.replace(tzinfo=timezone.utc)
 
         date_sec = date.timestamp()
         delta_sec = delta.total_seconds()
@@ -523,6 +532,7 @@ class TimeLength:
 
         #### Raises
         - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
+        - `ZeroDivisionError` when the divisor resolves to zero.
         """
 
         if isinstance(other, TimeLength):
@@ -548,6 +558,9 @@ class TimeLength:
 
         #### Returns
         - A `float` that represents the division of the passed `timedelta` and `self`.
+
+        #### Raises
+        - `ZeroDivisionError` when `self.result.seconds` is zero.
         """
 
         if isinstance(other, timedelta):
@@ -568,6 +581,7 @@ class TimeLength:
 
         #### Raises
         - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
+        - `ZeroDivisionError` when the divisor resolves to zero.
         """
 
         if isinstance(other, TimeLength):
@@ -593,6 +607,9 @@ class TimeLength:
 
         #### Returns
         - A `float` that represents the floor division of the passed `timedelta` and `self`.
+
+        #### Raises
+        - `ZeroDivisionError` when `self.result.seconds` is zero.
         """
 
         if isinstance(other, timedelta):
@@ -612,6 +629,7 @@ class TimeLength:
 
         #### Raises
         - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
+        - `ZeroDivisionError` when the divisor resolves to zero.
         """
 
         base = self.locale.base_scale
@@ -646,6 +664,7 @@ class TimeLength:
 
         #### Raises
         - `ParsedTimeDeltaError` when `self.result` is a value exceeding the supported bounds of `timedelta`.
+        - `ZeroDivisionError` when `self.result.delta` resolves to zero.
         """
 
         if isinstance(other, timedelta):
@@ -666,6 +685,9 @@ class TimeLength:
         #### Returns
         - A tuple of a `float` and an absolute `TimeLength` that represent the divmod of `self` and the passed
             `TimeLength`, `timedelta`, or number.
+
+        #### Raises
+        - `ZeroDivisionError` when the divisor resolves to zero.
         """
 
         if isinstance(other, TimeLength):
@@ -695,6 +717,9 @@ class TimeLength:
 
         #### Returns
         - A tuple of a `float` and a `timedelta` that represent the divmod of the passed `timedelta` and `self`.
+
+        #### Raises
+        - `ZeroDivisionError` when `self.result.seconds` is zero.
         """
 
         if isinstance(other, timedelta):
@@ -718,6 +743,7 @@ class TimeLength:
 
         #### Raises
         - `NoValidScalesError` when no valid and enabled scales are found to perform the action.
+        - `ValueError` when `mod` resolves to zero.
         """
 
         if not isinstance(other, (float, int)):
@@ -725,7 +751,7 @@ class TimeLength:
         elif mod is not None and not isinstance(mod, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        if not mod:
+        if mod is None:
             result: float = abs(self.result.seconds**other)
         else:
             mod_seconds: float = (
@@ -735,6 +761,10 @@ class TimeLength:
                 if isinstance(mod, timedelta)
                 else mod
             )
+
+            if mod_seconds == 0:
+                raise ValueError("pow() 3rd argument cannot be 0")
+
             result: float = abs(self.result.seconds**other) % mod_seconds
 
         base = self.locale.base_scale
