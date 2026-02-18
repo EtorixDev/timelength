@@ -1,6 +1,6 @@
 [project]
 name = "timelength"
-version = "3.0.2"
+version = "3.0.3"
 description = "A flexible python duration parser designed for human readable lengths of time."
 readme = "README.md"
 requires-python = ">=3.9"
