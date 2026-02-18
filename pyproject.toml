@@ -8,6 +8,7 @@ license = "MIT"
 authors = [{ name = "Etorix", email = "admin@etorix.dev" }]
 keywords = ["timelength", "duration", "parser", "parsing", "time", "datetime", "timedelta"]
 classifiers = [
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -21,6 +22,8 @@ dependencies = []
 [project.urls]
 Homepage = "https://pypi.org/project/timelength/"
 Repository = "https://github.com/EtorixDev/timelength/"
+Sponsor = "https://github.com/sponsors/EtorixDev"
+Donate = "https://ko-fi.com/Etorix"
 
 [dependency-groups]
 dev = [
@@ -32,11 +35,11 @@ dev = [
 ]
 
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.package-data]
-timelength = ["locales/*.json"]
+[tool.hatch.build.targets.wheel]
+packages = ["timelength"]
 
 [tool.ruff]
 line-length = 120
