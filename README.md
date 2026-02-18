@@ -26,9 +26,9 @@ A flexible python duration parser designed for human readable lengths of time, i
 ```
 pip install timelength
 ```
-Or added to your project via poetry:
+Or added to your project via uv:
 ```
-poetry add timelength
+uv add timelength
 ```
 
 ## Usage

@@ -11,4 +11,8 @@ htmlcov/
 .tox/
 .coverage
 dist/
+build/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
 test.py
