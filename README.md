@@ -1,9 +1,9 @@
 # [timelength](https://github.com/EtorixDev/timelength)
-[![](https://img.shields.io/pypi/v/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
-[![](https://img.shields.io/pypi/pyversions/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
-[![](https://img.shields.io/pypi/dm/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
-[![](https://img.shields.io/github/actions/workflow/status/EtorixDev/timelength/tests.yml?branch=main&style=flat-square&color=51a851)](https://github.com/EtorixDev/timelength)
-[![](https://img.shields.io/pypi/l/timelength.svg?style=flat-square&color=51a851)](https://pypi.org/project/timelength/)
+[![PyPI](https://img.shields.io/pypi/v/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
+[![Python](https://img.shields.io/pypi/pyversions/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
+[![Downloads](https://img.shields.io/pypi/dm/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
+[![Build](https://img.shields.io/github/actions/workflow/status/EtorixDev/timelength/tests.yml?branch=main&style=flat-square&color=51a851)](https://github.com/EtorixDev/timelength)
+[![License](https://img.shields.io/pypi/l/timelength.svg?style=flat-square&color=51a851)](https://pypi.org/project/timelength/)
 
 A flexible Python duration parser for human-readable lengths of time, including long-form durations such as `1 day, 5 hours, and 30 seconds`, short-form durations such as `1d5h30s`, numerals such as `twelve hours`, HHMMSS such as `12:30:15`, and mixtures such as `1 day 5h 30s`.
 
