@@ -7,8 +7,10 @@ from timelength.enums import CharacterType, ValueType
 
 def is_int(num: str | int | float) -> bool:
     """Check if the passed string is an integer."""
+
     try:
         num_int = int(float(num))
+
         return num_int == float(num)
     except ValueError:
         return False
@@ -16,15 +18,26 @@ def is_int(num: str | int | float) -> bool:
 
 def is_number(num: str) -> bool:
     """Check if the passed string is a number."""
+
     try:
         float(num)
+
         return True
     except ValueError:
         return False
 
 
 def character_type(text: str) -> CharacterType:
-    """Check the type of character based on the `CharacterType` enum."""
+    """---
+    Classify a character.
+
+    #### Arguments
+    - text: `str` — The character to classify.
+
+    #### Returns
+    - The matching `CharacterType`.
+    """
+
     if is_number(text):
         return CharacterType.NUMBER
     elif text.isalpha():
@@ -33,8 +46,20 @@ def character_type(text: str) -> CharacterType:
         return CharacterType.SYMBOL
 
 
-def value_type(text: str, scale_terms: list, numeral_terms: list, symbol_terms: list) -> ValueType:
-    """Check the type of string based on the `ValueType` enum."""
+def value_type(text: str, scale_terms: list[str], numeral_terms: list[str], symbol_terms: list[str]) -> ValueType:
+    """---
+    Classify a parsed value.
+
+    #### Arguments
+    - text: `str` — The value to classify.
+    - scale_terms: `list[str]` — The recognized scale terms.
+    - numeral_terms: `list[str]` — The recognized numeral terms.
+    - symbol_terms: `list[str]` — The recognized symbol terms.
+
+    #### Returns
+    - The matching `ValueType`.
+    """
+
     if is_number(text):
         return ValueType.NUMBER
     elif text in scale_terms:
@@ -49,5 +74,7 @@ def value_type(text: str, scale_terms: list, numeral_terms: list, symbol_terms: 
 
 def remove_diacritics(text: str) -> str:
     """Replace accented and special characters with their normalized equivalents."""
+
     nfkd_form = unicodedata.normalize("NFKD", text)
+
     return "".join([c for c in nfkd_form if not unicodedata.combining(c)])

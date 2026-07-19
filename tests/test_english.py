@@ -1,20 +1,29 @@
+from __future__ import annotations
+
+from typing import Union
+
 import pytest
+
 from timelength import English, FailureFlags, ParserSettings, Scale, TimeLength
+
+ExpectedInvalid = tuple[tuple[Union[float, str], FailureFlags], ...]
+ExpectedValid = tuple[tuple[float, Scale], ...]
+ParseCase = tuple[str, bool, float, ExpectedInvalid, ExpectedValid]
+FailureFlagCase = tuple[str, bool, FailureFlags, ParserSettings]
 
 
 @pytest.fixture
-def tl_notstrict():
+def tl_notstrict() -> TimeLength:
     return TimeLength(content="0 seconds", locale=English())
 
 
 @pytest.fixture
-def tl_strict():
+def tl_strict() -> TimeLength:
     return TimeLength(content="0 seconds", locale=English(flags=FailureFlags.ALL, settings=ParserSettings(allow_duplicate_scales=False)))
 
 
-def generate_notstrict_tests():
-    cases = []
-
+def generate_notstrict_tests() -> list[ParseCase]:
+    cases: list[ParseCase] = []
     # Basic Functionality
     cases.append(("", False, 0.0, (), ()))
     cases.append(("AHHHHH, what???###", False, 0.0, (("AHHHHH", FailureFlags.UNKNOWN_TERM), ("what", FailureFlags.UNKNOWN_TERM), ("?", FailureFlags.CONSECUTIVE_SPECIAL), ("?", FailureFlags.CONSECUTIVE_SPECIAL), ("###", FailureFlags.UNKNOWN_TERM)), ()))
@@ -35,27 +44,22 @@ def generate_notstrict_tests():
     cases.append(("1h5m30s", True, 3930.0, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)))))
     cases.append(("1 hour 5 minutes 30 seconds", True, 3930.0, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)))))
     cases.append(("1 hour 5min30s", True, 3930.0, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)))))
-
     # Segmentors as of Writing: "," "and" "&"
     cases.append(("1 hour, 5 minutes, and 30 seconds & 7ms", True, 3930.007, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)), (7.0, Scale(scale=0.001)))))
     cases.append(("5m,, 5s", True, 305.0, ((",", FailureFlags.CONSECUTIVE_SEGMENTOR),), ((5.0, Scale(scale=60.0)), (5.0, Scale(scale=1.0)))))
     cases.append(("1, 2, 3 minutes", True, 360.0, (), ((6.0, Scale(scale=60.0)),)))
-
     # Connectors as of Writing: " ", "-", "\t", "+"
     cases.append(("1 minute-2-seconds	3MS", True, 62.003, (), ((1.0, Scale(scale=60.0)), (2.0, Scale(scale=1.0)), (3.0, Scale(scale=0.001)))))
     cases.append(("5m,   5s", True, 305.0, ((" ", FailureFlags.CONSECUTIVE_CONNECTOR),), ((5.0, Scale(scale=60.0)), (5.0, Scale(scale=1.0)))))
     cases.append(("1++++++2 minutes", True, 120.0, ((1.0, FailureFlags.LONELY_VALUE), ("+", FailureFlags.CONSECUTIVE_CONNECTOR), ("+", FailureFlags.CONSECUTIVE_CONNECTOR), ("+", FailureFlags.CONSECUTIVE_CONNECTOR), ("+", FailureFlags.CONSECUTIVE_CONNECTOR)), ((2.0, Scale(scale=60.0)),)))
     cases.append(("1++2 minutes", True, 120.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=60.0)),)))
-
     # Numerals / Multipliers / Operators
     cases.append(("zero", True, 0.0, (), ((0.0, Scale(scale=1.0)),)))
     cases.append(("zero minutes", True, 0.0, (), ((0.0, Scale(scale=60.0)),)))
     cases.append(("five", True, 5.0, (), ((5.0, Scale(scale=1.0)),)))
-
     cases.append(("one thousand", True, 1000.0, (), ()))
     cases.append(("one thousand and five", True, 1005.0, (), ()))
     cases.append(("one thousand seconds and five", True, 1000.0, ((5.0, FailureFlags.LONELY_VALUE),), ()))
-
     cases.append(("half", True, 0.5, (), ((0.5, Scale(scale=1.0)),)))
     cases.append(("half min", True, 30.0, (), ((0.5, Scale(scale=60.0)),)))
     cases.append(("one half", True, 0.5, (), ((0.5, Scale(scale=1.0)),)))
@@ -63,7 +67,6 @@ def generate_notstrict_tests():
     cases.append(("twenty-three half of min", True, 690, (), ((11.5, Scale(scale=60)),)))
     cases.append(("half of twenty-three min", True, 690, (), ((11.5, Scale(scale=60)),)))
     cases.append(("half twenty-three min", True, 690, (), ((11.5, Scale(scale=60)),)))
-
     cases.append(("half half twenty three min", True, 1380.0, (("half half", FailureFlags.AMBIGUOUS_MULTIPLIER),), ((23.0, Scale(scale=60.0)),)))
     cases.append(("half of half of twenty three min", True, 1380.0, (("half of half", FailureFlags.AMBIGUOUS_MULTIPLIER),), ((23.0, Scale(scale=60.0)),)))
     cases.append(("half of half twenty three min", True, 1380.0, (("half of half", FailureFlags.AMBIGUOUS_MULTIPLIER),), ((23.0, Scale(scale=60.0)),)))
@@ -72,7 +75,6 @@ def generate_notstrict_tests():
     cases.append(("twenty-three half half of min", False, 0.0, (("twenty-three half half", FailureFlags.AMBIGUOUS_MULTIPLIER), ("min", FailureFlags.LONELY_SCALE)), ()))
     cases.append(("a million seconds half", True, 1000000.0, ((0.5, FailureFlags.LONELY_VALUE),), ((1000000.0, Scale(scale=1.0)),)))
     cases.append(("a million seconds half of", True, 1000000.0, (("of", FailureFlags.UNUSED_OPERATOR), (0.5, FailureFlags.LONELY_VALUE)), ((1000000.0, Scale(scale=1.0)),)))
-
     cases.append(("twenty-two sec", True, 22.0, (), ((22.0, Scale(scale=1.0)),)))
     cases.append(("thousand seconds", True, 1000.0, (), ((1000.0, Scale(scale=1.0)),)))
     cases.append(("a million seconds", True, 1000000.0, (), ((1000000.0, Scale(scale=1.0)),)))
@@ -85,29 +87,24 @@ def generate_notstrict_tests():
     cases.append(("one half minutes of", True, 30.0, (("of", FailureFlags.UNUSED_OPERATOR),), ((0.5, Scale(scale=60.0)),)))
     cases.append(("the half of a million seconds", True, 500000.0, (), ((500000.0, Scale(scale=1.0)),)))
     cases.append(("twenty-five hundred minutes and half of one million two hundred and fifty-six thousand seconds", True, 778000.0, (), ((2500.0, Scale(scale=60.0)), (628000.0, Scale(scale=1.0)))))
-
     cases.append(("two of six minutes", True, 720.0, (), ((12.0, Scale(scale=60.0)),)))
     cases.append(("2 of six minutes", True, 720.0, (), ((12.0, Scale(scale=60.0)),)))
     cases.append(("two of 6 minutes", True, 720.0, (), ((12.0, Scale(scale=60.0)),)))
     cases.append(("2 of", False, 0.0, (("of", FailureFlags.UNUSED_OPERATOR), (2.0, FailureFlags.LONELY_VALUE)), ()))
-
     # Numeral Type Combinations + Float/Numeral Combinations
     cases.append(("FIVE hours, 2 minutes, 3s", True, 18123.0, (), ((5.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
     cases.append(("1 2 seconds", True, 2.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=1.0)),)))
     cases.append(("one two seconds", True, 12.0, (), ((12.0, Scale(scale=1.0)),)))
     cases.append(("1 two seconds", True, 2.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=1.0)),)))
     cases.append(("one 2 seconds", True, 2.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=1.0)),)))
-
     cases.append(("1 13 seconds", True, 13.0, ((1.0, FailureFlags.LONELY_VALUE),), ((13.0, Scale(scale=1.0)),)))
     cases.append(("one thirteen seconds", True, 113.0, (), ((113.0, Scale(scale=1.0)),)))
     cases.append(("1 thirteen seconds", True, 13.0, ((1.0, FailureFlags.LONELY_VALUE),), ((13.0, Scale(scale=1.0)),)))
     cases.append(("one 13 seconds", True, 13.0, ((1.0, FailureFlags.LONELY_VALUE),), ((13.0, Scale(scale=1.0)),)))
-
     cases.append(("1 50 seconds", True, 50.0, ((1.0, FailureFlags.LONELY_VALUE),), ((50.0, Scale(scale=1.0)),)))
     cases.append(("one fifty seconds", True, 150.0, (), ((150.0, Scale(scale=1.0)),)))
     cases.append(("1 fifty seconds", True, 50.0, ((1.0, FailureFlags.LONELY_VALUE),), ((50.0, Scale(scale=1.0)),)))
     cases.append(("one 50 seconds", True, 50.0, ((1.0, FailureFlags.LONELY_VALUE),), ((50.0, Scale(scale=1.0)),)))
-
     cases.append(("3 100 seconds", True, 3100.0, (), ((3100.0, Scale(scale=1.0)),)))
     cases.append(("three hundred seconds", True, 300.0, (), ((300.0, Scale(scale=1.0)),)))
     cases.append(("3 hundred seconds", True, 300.0, (), ((300.0, Scale(scale=1.0)),)))
@@ -115,32 +112,26 @@ def generate_notstrict_tests():
     cases.append(("three one hundred seconds", True, 3100.0, (), ((3100.0, Scale(scale=1.0)),)))
     cases.append(("three 1 hundred seconds", True, 100.0, ((3.0, FailureFlags.LONELY_VALUE),), ((100.0, Scale(scale=1.0)),)))
     cases.append(("3 one hundred seconds", True, 100.0, ((3.0, FailureFlags.LONELY_VALUE),), ((100.0, Scale(scale=1.0)),)))
-
     cases.append(("15 5 seconds", True, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("fifteen five seconds", True, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("15 five seconds", True, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("fifteen 5 seconds", True, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
-
     cases.append(("15 15 seconds", True, 15.0, ((15.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("fifteen fifteen seconds", True, 1515.0, (), ((1515.0, Scale(scale=1.0)),)))
     cases.append(("15 fifteen seconds", True, 15.0, ((15.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("fifteen 15 seconds", True, 15.0, ((15.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
-
     cases.append(("15 20 seconds", True, 20.0, ((15.0, FailureFlags.LONELY_VALUE),), ((20.0, Scale(scale=1.0)),)))
     cases.append(("fifteen twenty seconds", True, 1520.0, (), ((1520.0, Scale(scale=1.0)),)))
     cases.append(("15 twenty seconds", True, 20.0, ((15.0, FailureFlags.LONELY_VALUE),), ((20.0, Scale(scale=1.0)),)))
     cases.append(("fifteen 20 seconds", True, 20.0, ((15.0, FailureFlags.LONELY_VALUE),), ((20.0, Scale(scale=1.0)),)))
-
     cases.append(("20 1 seconds", True, 1.0, ((20.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
     cases.append(("twenty one seconds", True, 21.0, (), ((21.0, Scale(scale=1.0)),)))
     cases.append(("20 one seconds", True, 1.0, ((20.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
     cases.append(("twenty 1 seconds", True, 1.0, ((20.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
-
     cases.append(("20 15 seconds", True, 15.0, ((20.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("twenty fifteen seconds", True, 2015.0, (), ((2015.0, Scale(scale=1.0)),)))
     cases.append(("20 fifteen seconds", True, 15.0, ((20.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("twenty 15 seconds", True, 15.0, ((20.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
-
     cases.append(("20 30 seconds", True, 30.0, ((20.0, FailureFlags.LONELY_VALUE),), ((30.0, Scale(scale=1.0)),)))
     cases.append(("twenty thirty seconds", True, 2030.0, (), ((2030.0, Scale(scale=1.0)),)))
     cases.append(("20 thirty seconds", True, 30.0, ((20.0, FailureFlags.LONELY_VALUE),), ((30.0, Scale(scale=1.0)),)))
@@ -149,14 +140,12 @@ def generate_notstrict_tests():
     cases.append(("twenty 20 three seconds", True, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (20.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty 20 3 seconds", True, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (20.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty 20 3", False, 0.0, ((20.0, FailureFlags.LONELY_VALUE), (20.0, FailureFlags.LONELY_VALUE), (3.0, FailureFlags.LONELY_VALUE)), ()))
-
     # Misc
     cases.append(("1 minute seconds", True, 60.0, (("seconds", FailureFlags.LONELY_SCALE),), ((1.0, Scale(scale=60.0)),)))
     cases.append(("minute 1 seconds", True, 1.0, (("minute", FailureFlags.LONELY_SCALE),), ((1.0, Scale(scale=1.0)),)))
     cases.append(("1, one 1", False, 0.0, ((1.0, FailureFlags.LONELY_VALUE), (1.0, FailureFlags.LONELY_VALUE), (1.0, FailureFlags.LONELY_VALUE)), ()))
     cases.append(("1!!!sec", False, 0.0, (("1!!!", FailureFlags.MISPLACED_ALLOWED_TERM), ("sec", FailureFlags.LONELY_SCALE)), ()))
     cases.append(("1, two/sec", False, 0.0, ((1.0, FailureFlags.LONELY_VALUE), (2.0, FailureFlags.LONELY_VALUE), ("/", FailureFlags.MISPLACED_SPECIAL), ("sec", FailureFlags.LONELY_SCALE)), ()))
-
     # Long Numerals + Segmentor Combinations
     cases.append(("twenty-three thousand sec", True, 23000.0, (), ((23000.0, Scale(scale=1.0)),)))
     cases.append(("two thousand twenty-three sec", True, 2023.0, (), ((30.0, Scale(scale=1.0)),)))
@@ -165,7 +154,6 @@ def generate_notstrict_tests():
     cases.append(("two thousand and twenty three five sec", True, 5.0, ((2023.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("one thousand five and hundred", True, 1500.0, (), ((1500.0, Scale(scale=1.0)),)))
     cases.append(("one thousand 5 and hundred", True, 1500.0, (), ((1500.0, Scale(scale=1.0)),)))
-
     cases.append(("one hundred seventy two thousand", True, 172000.0, (), ((172000.0, Scale(scale=1.0)),)))
     cases.append(("one hundred and seventy two thousand", True, 172000.0, (), ((172000.0, Scale(scale=1.0)),)))
     cases.append(("one million seventy two thousand", True, 1072000.0, (), ((1072000.0, Scale(scale=1.0)),)))
@@ -176,12 +164,10 @@ def generate_notstrict_tests():
     cases.append(("one thousand six hundred     and five", False, 0.0, ((1600.0, FailureFlags.LONELY_VALUE), (" ", FailureFlags.CONSECUTIVE_CONNECTOR), (" ", FailureFlags.CONSECUTIVE_CONNECTOR), (" ", FailureFlags.CONSECUTIVE_CONNECTOR), (5.0, FailureFlags.LONELY_VALUE)), ()))
     cases.append(("five hundred and two hundred seconds", True, 700.0, (), ((700.0, Scale(scale=1.0)),)))
     cases.append(("one billion billion billion billion billion years", True, 3.1536000000000003e52, (), ((1.0000000000000001e45, Scale(scale=31536000.0)),)))
-
     # Awkward Thousands/Decimals
     cases.append(("twenty,18 three seconds", True, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (18.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty .18 three seconds", True, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (0.18, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty 18 three seconds", True, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (18.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
-
     # HHMMSS, Fractions, + Combinations
     cases.append(("12:30:15.25", True, 45015.25, (), ((12.0, Scale(scale=3600.0)), (30.0, Scale(scale=60.0)), (15.25, Scale(scale=1.0)))))
     cases.append(("22: 5", True, 1325.0, (), ((22.0, Scale(scale=60.0)), (5.0, Scale(scale=1.0)))))
@@ -213,7 +199,6 @@ def generate_notstrict_tests():
     cases.append(("97 1:2:3", True, 3723.0, ((97.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
     cases.append(("97, 5 1:2:3", True, 3723.0, ((97.0, FailureFlags.LONELY_VALUE), (5.0, FailureFlags.LONELY_VALUE)), ((1.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
     cases.append(("97, half 5 1:2:3", True, 3723.0, ((97.0, FailureFlags.LONELY_VALUE), (0.5, FailureFlags.LONELY_VALUE), (5.0, FailureFlags.LONELY_VALUE)), ((1.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
-
     # Duplicate Scales
     cases.append(("2 minutes and 3 minutes, 5 minutes", True, 600.0, (), ((2.0, Scale(scale=60.0)), (3.0, Scale(scale=60.0)), (5.0, Scale(scale=60.0)))))
     cases.append(("twenty hundred five seconds, twenty thousand seconds", True, 22005.0, (), ((2005.0, Scale(scale=1.0)), (20000.0, Scale(scale=1.0)))))
@@ -222,9 +207,8 @@ def generate_notstrict_tests():
     return cases
 
 
-def generate_strict_tests():
-    cases = []
-
+def generate_strict_tests() -> list[ParseCase]:
+    cases: list[ParseCase] = []
     # Basic Functionality
     cases.append(("", False, 0.0, (), ()))
     cases.append(("AHHHHH, what???###", False, 0.0, (("AHHHHH", FailureFlags.UNKNOWN_TERM), ("what", FailureFlags.UNKNOWN_TERM), ("?", FailureFlags.CONSECUTIVE_SPECIAL), ("?", FailureFlags.CONSECUTIVE_SPECIAL), ("###", FailureFlags.UNKNOWN_TERM)), ()))
@@ -245,27 +229,22 @@ def generate_strict_tests():
     cases.append(("1h5m30s", True, 3930.0, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)))))
     cases.append(("1 hour 5 minutes 30 seconds", True, 3930.0, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)))))
     cases.append(("1 hour 5min30s", True, 3930.0, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)))))
-
     # Segmentors as of Writing: "," "and" "&"
     cases.append(("1 hour, 5 minutes, and 30 seconds & 7ms", True, 3930.007, (), ((1.0, Scale(scale=3600.0)), (5.0, Scale(scale=60.0)), (30.0, Scale(scale=1.0)), (7.0, Scale(scale=0.001)))))
     cases.append(("5m,, 5s", False, 305.0, ((",", FailureFlags.CONSECUTIVE_SEGMENTOR),), ((5.0, Scale(scale=60.0)), (5.0, Scale(scale=1.0)))))
     cases.append(("1, 2, 3 minutes", True, 360.0, (), ((6.0, Scale(scale=60.0)),)))
-
     # Connectors as of Writing: " ", "-", "\t", "+"
     cases.append(("1 minute-2-seconds	3MS", True, 62.003, (), ((1.0, Scale(scale=60.0)), (2.0, Scale(scale=1.0)), (3.0, Scale(scale=0.001)))))
     cases.append(("5m,   5s", False, 305.0, ((" ", FailureFlags.CONSECUTIVE_CONNECTOR),), ((5.0, Scale(scale=60.0)), (5.0, Scale(scale=1.0)))))
     cases.append(("1++++++2 minutes", False, 120.0, ((1.0, FailureFlags.LONELY_VALUE), ("+", FailureFlags.CONSECUTIVE_CONNECTOR), ("+", FailureFlags.CONSECUTIVE_CONNECTOR), ("+", FailureFlags.CONSECUTIVE_CONNECTOR), ("+", FailureFlags.CONSECUTIVE_CONNECTOR)), ((2.0, Scale(scale=60.0)),)))
     cases.append(("1++2 minutes", False, 120.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=60.0)),)))
-
     # Numerals / Multipliers / Operators
     cases.append(("zero", True, 0.0, (), ((0.0, Scale(scale=1.0)),)))
     cases.append(("zero minutes", True, 0.0, (), ((0.0, Scale(scale=60.0)),)))
     cases.append(("five", True, 5.0, (), ((5.0, Scale(scale=1.0)),)))
-
     cases.append(("one thousand", True, 1000.0, (), ((1000.0, Scale(scale=1.0)),)))
     cases.append(("one thousand and five", True, 1005.0, (), ((1005.0, Scale(scale=1.0)),)))
     cases.append(("one thousand seconds and five", False, 1000.0, ((5.0, FailureFlags.LONELY_VALUE),), ((1000.0, Scale(scale=1.0)),)))
-
     cases.append(("half", True, 0.5, (), ((0.5, Scale(scale=1.0)),)))
     cases.append(("half min", True, 30.0, (), ((0.5, Scale(scale=60.0)),)))
     cases.append(("one half", True, 0.5, (), ((0.5, Scale(scale=1.0)),)))
@@ -273,7 +252,6 @@ def generate_strict_tests():
     cases.append(("twenty-three half of min", True, 690, (), ((11.5, Scale(scale=60)),)))
     cases.append(("half of twenty-three min", True, 690, (), ((11.5, Scale(scale=60)),)))
     cases.append(("half twenty-three min", True, 690, (), ((11.5, Scale(scale=60)),)))
-
     cases.append(("half half twenty three min", False, 1380.0, (("half half", FailureFlags.AMBIGUOUS_MULTIPLIER),), ((23.0, Scale(scale=60.0)),)))
     cases.append(("half of half of twenty three min", False, 1380.0, (("half of half", FailureFlags.AMBIGUOUS_MULTIPLIER),), ((23.0, Scale(scale=60.0)),)))
     cases.append(("half of half twenty three min", False, 1380.0, (("half of half", FailureFlags.AMBIGUOUS_MULTIPLIER),), ((23.0, Scale(scale=60.0)),)))
@@ -282,7 +260,6 @@ def generate_strict_tests():
     cases.append(("twenty-three half half of min", False, 0.0, (("twenty-three half half", FailureFlags.AMBIGUOUS_MULTIPLIER), ("min", FailureFlags.LONELY_SCALE)), ()))
     cases.append(("a million seconds half", False, 1000000.0, ((0.5, FailureFlags.LONELY_VALUE),), ((1000000.0, Scale(scale=1.0)),)))
     cases.append(("a million seconds half of", False, 1000000.0, (("of", FailureFlags.UNUSED_OPERATOR), (0.5, FailureFlags.LONELY_VALUE)), ((1000000.0, Scale(scale=1.0)),)))
-
     cases.append(("twenty-two sec", True, 22.0, (), ((22.0, Scale(scale=1.0)),)))
     cases.append(("thousand seconds", True, 1000.0, (), ((1000.0, Scale(scale=1.0)),)))
     cases.append(("a million seconds", True, 1000000.0, (), ((1000000.0, Scale(scale=1.0)),)))
@@ -295,29 +272,24 @@ def generate_strict_tests():
     cases.append(("one half minutes of", False, 30.0, (("of", FailureFlags.UNUSED_OPERATOR),), ((0.5, Scale(scale=60.0)),)))
     cases.append(("the half of a million seconds", True, 500000.0, (), ((500000.0, Scale(scale=1.0)),)))
     cases.append(("twenty-five hundred minutes and half of one million two hundred and fifty-six thousand seconds", True, 778000.0, (), ((2500.0, Scale(scale=60.0)), (628000.0, Scale(scale=1.0)))))
-
     cases.append(("two of six minutes", True, 720.0, (), ((12.0, Scale(scale=60.0)),)))
     cases.append(("2 of six minutes", True, 720.0, (), ((12.0, Scale(scale=60.0)),)))
     cases.append(("two of 6 minutes", True, 720.0, (), ((12.0, Scale(scale=60.0)),)))
     cases.append(("2 of", False, 0.0, (("of", FailureFlags.UNUSED_OPERATOR), (2.0, FailureFlags.LONELY_VALUE)), ()))
-
     # Numeral Type Combinations + Float/Numeral Combinations
     cases.append(("FIVE hours, 2 minutes, 3s", True, 18123.0, (), ((5.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
     cases.append(("1 2 seconds", False, 2.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=1.0)),)))
     cases.append(("one two seconds", True, 12.0, (), ((12.0, Scale(scale=1.0)),)))
     cases.append(("1 two seconds", False, 2.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=1.0)),)))
     cases.append(("one 2 seconds", False, 2.0, ((1.0, FailureFlags.LONELY_VALUE),), ((2.0, Scale(scale=1.0)),)))
-
     cases.append(("1 13 seconds", False, 13.0, ((1.0, FailureFlags.LONELY_VALUE),), ((13.0, Scale(scale=1.0)),)))
     cases.append(("one thirteen seconds", True, 113.0, (), ((113.0, Scale(scale=1.0)),)))
     cases.append(("1 thirteen seconds", False, 13.0, ((1.0, FailureFlags.LONELY_VALUE),), ((13.0, Scale(scale=1.0)),)))
     cases.append(("one 13 seconds", False, 13.0, ((1.0, FailureFlags.LONELY_VALUE),), ((13.0, Scale(scale=1.0)),)))
-
     cases.append(("1 50 seconds", False, 50.0, ((1.0, FailureFlags.LONELY_VALUE),), ((50.0, Scale(scale=1.0)),)))
     cases.append(("one fifty seconds", True, 150.0, (), ((150.0, Scale(scale=1.0)),)))
     cases.append(("1 fifty seconds", False, 50.0, ((1.0, FailureFlags.LONELY_VALUE),), ((50.0, Scale(scale=1.0)),)))
     cases.append(("one 50 seconds", False, 50.0, ((1.0, FailureFlags.LONELY_VALUE),), ((50.0, Scale(scale=1.0)),)))
-
     cases.append(("3 100 seconds", True, 3100.0, (), ((3100.0, Scale(scale=1.0)),)))
     cases.append(("three hundred seconds", True, 300.0, (), ((300.0, Scale(scale=1.0)),)))
     cases.append(("3 hundred seconds", True, 300.0, (), ((300.0, Scale(scale=1.0)),)))
@@ -325,32 +297,26 @@ def generate_strict_tests():
     cases.append(("three one hundred seconds", True, 3100.0, (), ((3100.0, Scale(scale=1.0)),)))
     cases.append(("three 1 hundred seconds", False, 100.0, ((3.0, FailureFlags.LONELY_VALUE),), ((100.0, Scale(scale=1.0)),)))
     cases.append(("3 one hundred seconds", False, 100.0, ((3.0, FailureFlags.LONELY_VALUE),), ((100.0, Scale(scale=1.0)),)))
-
     cases.append(("15 5 seconds", False, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("fifteen five seconds", False, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("15 five seconds", False, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("fifteen 5 seconds", False, 5.0, ((15.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
-
     cases.append(("15 15 seconds", False, 15.0, ((15.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("fifteen fifteen seconds", True, 1515.0, (), ((1515.0, Scale(scale=1.0)),)))
     cases.append(("15 fifteen seconds", False, 15.0, ((15.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("fifteen 15 seconds", False, 15.0, ((15.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
-
     cases.append(("15 20 seconds", False, 20.0, ((15.0, FailureFlags.LONELY_VALUE),), ((20.0, Scale(scale=1.0)),)))
     cases.append(("fifteen twenty seconds", True, 1520.0, (), ((1520.0, Scale(scale=1.0)),)))
     cases.append(("15 twenty seconds", False, 20.0, ((15.0, FailureFlags.LONELY_VALUE),), ((20.0, Scale(scale=1.0)),)))
     cases.append(("fifteen 20 seconds", False, 20.0, ((15.0, FailureFlags.LONELY_VALUE),), ((20.0, Scale(scale=1.0)),)))
-
     cases.append(("20 1 seconds", False, 1.0, ((20.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
     cases.append(("twenty one seconds", True, 21.0, (), ((21.0, Scale(scale=1.0)),)))
     cases.append(("20 one seconds", False, 1.0, ((20.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
     cases.append(("twenty 1 seconds", False, 1.0, ((20.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
-
     cases.append(("20 15 seconds", False, 15.0, ((20.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("twenty fifteen seconds", True, 2015.0, (), ((2015.0, Scale(scale=1.0)),)))
     cases.append(("20 fifteen seconds", False, 15.0, ((20.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
     cases.append(("twenty 15 seconds", False, 15.0, ((20.0, FailureFlags.LONELY_VALUE),), ((15.0, Scale(scale=1.0)),)))
-
     cases.append(("20 30 seconds", False, 30.0, ((20.0, FailureFlags.LONELY_VALUE),), ((30.0, Scale(scale=1.0)),)))
     cases.append(("twenty thirty seconds", True, 2030.0, (), ((2030.0, Scale(scale=1.0)),)))
     cases.append(("20 thirty seconds", False, 30.0, ((20.0, FailureFlags.LONELY_VALUE),), ((30.0, Scale(scale=1.0)),)))
@@ -359,14 +325,12 @@ def generate_strict_tests():
     cases.append(("twenty 20 three seconds", False, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (20.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty 20 3 seconds", False, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (20.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty 20 3", False, 0.0, ((20.0, FailureFlags.LONELY_VALUE), (20.0, FailureFlags.LONELY_VALUE), (3.0, FailureFlags.LONELY_VALUE)), ()))
-
     # Misc
     cases.append(("1 minute seconds", False, 60.0, (("seconds", FailureFlags.LONELY_SCALE),), ((1.0, Scale(scale=60.0)),)))
     cases.append(("minute 1 seconds", False, 1.0, (("minute", FailureFlags.LONELY_SCALE),), ((1.0, Scale(scale=1.0)),)))
     cases.append(("1, one 1", False, 0.0, ((1.0, FailureFlags.LONELY_VALUE), (1.0, FailureFlags.LONELY_VALUE), (1.0, FailureFlags.LONELY_VALUE)), ()))
     cases.append(("1!!!sec", False, 0.0, (("1!!!", FailureFlags.MISPLACED_ALLOWED_TERM), ("sec", FailureFlags.LONELY_SCALE)), ()))
     cases.append(("1, two/sec", False, 0.0, ((1.0, FailureFlags.LONELY_VALUE), (2.0, FailureFlags.LONELY_VALUE), ("/", FailureFlags.MISPLACED_SPECIAL), ("sec", FailureFlags.LONELY_SCALE)), ()))
-
     # Long Numerals + Segmentor Combinations
     cases.append(("twenty-three thousand sec", True, 23000.0, (), ((23000.0, Scale(scale=1.0)),)))
     cases.append(("two thousand twenty-three sec", True, 2023.0, (), ((30.0, Scale(scale=1.0)),)))
@@ -375,7 +339,6 @@ def generate_strict_tests():
     cases.append(("two thousand and twenty three five sec", False, 5.0, ((2023.0, FailureFlags.LONELY_VALUE),), ((5.0, Scale(scale=1.0)),)))
     cases.append(("one thousand five and hundred", True, 1500.0, (), ((1500.0, Scale(scale=1.0)),)))
     cases.append(("one thousand 5 and hundred", True, 1500.0, (), ((1500.0, Scale(scale=1.0)),)))
-
     cases.append(("one hundred seventy two thousand", True, 172000.0, (), ((172000.0, Scale(scale=1.0)),)))
     cases.append(("one hundred and seventy two thousand", True, 172000.0, (), ((172000.0, Scale(scale=1.0)),)))
     cases.append(("one million seventy two thousand", True, 1072000.0, (), ((1072000.0, Scale(scale=1.0)),)))
@@ -386,12 +349,10 @@ def generate_strict_tests():
     cases.append(("one thousand six hundred     and five", False, 0.0, ((1600.0, FailureFlags.LONELY_VALUE), (" ", FailureFlags.CONSECUTIVE_CONNECTOR), (" ", FailureFlags.CONSECUTIVE_CONNECTOR), (" ", FailureFlags.CONSECUTIVE_CONNECTOR), (5.0, FailureFlags.LONELY_VALUE)), ()))
     cases.append(("five hundred and two hundred seconds", True, 700.0, (), ((700.0, Scale(scale=1.0)),)))
     cases.append(("one billion billion billion billion billion years", True, 3.1536000000000003e52, (), ((1.0000000000000001e45, Scale(scale=31536000.0)),)))
-
     # Awkward Thousands/Decimals
     cases.append(("twenty,18 three seconds", False, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (18.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty .18 three seconds", False, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (0.18, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
     cases.append(("twenty 18 three seconds", False, 3.0, ((20.0, FailureFlags.LONELY_VALUE), (18.0, FailureFlags.LONELY_VALUE)), ((3.0, Scale(scale=1.0)),)))
-
     # HHMMSS, Fractions, + Combinations
     cases.append(("12:30:15.25", True, 45015.25, (), ((12.0, Scale(scale=3600.0)), (30.0, Scale(scale=60.0)), (15.25, Scale(scale=1.0)))))
     cases.append(("22: 5", True, 1325.0, (), ((22.0, Scale(scale=60.0)), (5.0, Scale(scale=1.0)))))
@@ -423,7 +384,6 @@ def generate_strict_tests():
     cases.append(("97 1:2:3", False, 3723.0, ((97.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
     cases.append(("97, 5 1:2:3", False, 3723.0, ((97.0, FailureFlags.LONELY_VALUE), (5.0, FailureFlags.LONELY_VALUE)), ((1.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
     cases.append(("97, half 5 1:2:3", False, 3723.0, ((97.0, FailureFlags.LONELY_VALUE), (0.5, FailureFlags.LONELY_VALUE), (5.0, FailureFlags.LONELY_VALUE)), ((1.0, Scale(scale=3600.0)), (2.0, Scale(scale=60.0)), (3.0, Scale(scale=1.0)))))
-
     # Duplicate Scales
     cases.append(("2 minutes and 3 minutes, 5 minutes", False, 120.0, (("3 minutes", FailureFlags.DUPLICATE_SCALE), ("5 minutes", FailureFlags.DUPLICATE_SCALE)), ((2.0, Scale(scale=60.0)),)))
     cases.append(("twenty hundred five seconds, twenty thousand seconds", False, 2005.0, (("twenty thousand seconds", FailureFlags.DUPLICATE_SCALE),), ((2005.0, Scale(scale=1.0)),)))
@@ -443,12 +403,12 @@ def compare_scales(scale1: Scale, scale2: Scale) -> bool:
 )
 def test_notstrict_mode(
     tl_notstrict: TimeLength,
-    input,
-    expected_success,
-    expected_seconds,
-    expected_invalid,
-    expected_valid,
-):
+    input: str,
+    expected_success: bool,
+    expected_seconds: float,
+    expected_invalid: ExpectedInvalid,
+    expected_valid: ExpectedValid,
+) -> None:
     tl_notstrict.content = input
     tl_notstrict.parse()
 
@@ -466,12 +426,12 @@ def test_notstrict_mode(
 )
 def test_strict_mode(
     tl_strict: TimeLength,
-    input,
-    expected_success,
-    expected_seconds,
-    expected_invalid,
-    expected_valid,
-):
+    input: str,
+    expected_success: bool,
+    expected_seconds: float,
+    expected_invalid: ExpectedInvalid,
+    expected_valid: ExpectedValid,
+) -> None:
     tl_strict.content = input
     tl_strict.parse()
 
@@ -483,9 +443,8 @@ def test_strict_mode(
         assert compare_scales(actual_scale[1], expected_scale[1])
 
 
-def generate_failureflag_tests():
-    cases = []
-
+def generate_failureflag_tests() -> list[FailureFlagCase]:
+    cases: list[FailureFlagCase] = []
     cases.append(("1 minute and 77 fake terms", True, FailureFlags.NONE, ParserSettings()))
     cases.append(("1. minutes", False, FailureFlags.MALFORMED_DECIMAL, ParserSettings(allow_decimals_lacking_digits=False)))
     cases.append(("1. minutes", True, FailureFlags.MALFORMED_DECIMAL, ParserSettings(allow_decimals_lacking_digits=True)))
@@ -510,7 +469,6 @@ def generate_failureflag_tests():
     cases.append(("1, /2", False, FailureFlags.MISPLACED_SPECIAL, ParserSettings()))
     cases.append(("1 min of", False, FailureFlags.UNUSED_OPERATOR, ParserSettings()))
     cases.append(("half of a quarter of 5 minutes", False, FailureFlags.AMBIGUOUS_MULTIPLIER, ParserSettings()))
-
     cases.append(("1 minute and 77 fake terms", False, FailureFlags.ALL, ParserSettings()))
     cases.append(("1. minutes", False, FailureFlags.ALL, ParserSettings(allow_decimals_lacking_digits=False)))
     cases.append(("1. minutes", True, FailureFlags.ALL, ParserSettings(allow_decimals_lacking_digits=True)))
@@ -554,11 +512,11 @@ def extract_failureflags(tl: TimeLength) -> FailureFlags:
 )
 def test_failureflags(
     tl_notstrict: TimeLength,
-    input,
-    expected_success,
-    failureflag,
-    parsersettings,
-):
+    input: str,
+    expected_success: bool,
+    failureflag: FailureFlags,
+    parsersettings: ParserSettings,
+) -> None:
     tl_notstrict.content = input
     tl_notstrict.locale.flags = failureflag
     tl_notstrict.locale.settings = parsersettings

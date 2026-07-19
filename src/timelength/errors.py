@@ -34,16 +34,16 @@ class PotentialTimeDeltaError(OverflowError):
 
 
 class InvalidScaleError(ValueError):
-    """Exception for when a `Scale` is invalid."""
+    """---
+    Exception for when a `Scale` is invalid.
 
-    def __init__(self, scale_name: str = "", message="") -> None:
+    #### Attributes
+    - scale_name: `str = ""` — The name of the invalid scale, if known.
+    """
+
+    def __init__(self, scale_name: str = "", message: str = "") -> None:
         default_message = "A scale is missing required attributes."
-
-        if scale_name and not message:
-            message = f'"{scale_name}" is missing required attributes.'
-        else:
-            message = message or default_message
-
+        message = f'"{scale_name}" is missing required attributes.' if scale_name and not message else message or default_message
         super().__init__(message)
         self.scale_name = scale_name
 
@@ -58,16 +58,16 @@ class NoValidScalesError(ValueError):
 
 
 class InvalidNumeralError(ValueError):
-    """Exception for when a `Numeral` is invalid."""
+    """---
+    Exception for when a `Numeral` is invalid.
+
+    #### Attributes
+    - numeral_name: `str = ""` — The name of the invalid numeral, if known.
+    """
 
     def __init__(self, numeral_name: str = "", message: str = "") -> None:
         default_message = "A numeral is missing required attributes."
-
-        if numeral_name and not message:
-            message = f'"{numeral_name}" is missing required attributes.'
-        else:
-            message = message or default_message
-
+        message = f'"{numeral_name}" is missing required attributes.' if numeral_name and not message else message or default_message
         super().__init__(message)
         self.numeral_name = numeral_name
 
@@ -85,7 +85,7 @@ class InvalidLocaleError(ValueError):
     """Exception for when a `Locale` has invalid configuration."""
 
     def __init__(self, locale: Locale, message: str = "") -> None:
-        message = message or f"The configuration for {repr(str(locale))} is invalid."
+        message = message or f"The configuration for {str(locale)!r} is invalid."
         super().__init__(message)
 
 
@@ -93,5 +93,5 @@ class InvalidParserError(ValueError):
     """Exception for when a parser is invalid."""
 
     def __init__(self, locale: Locale, message: str = "") -> None:
-        message = message or f"{repr(str(locale))} is missing a valid parser function."
+        message = message or f"{str(locale)!r} is missing a valid parser function."
         super().__init__(message)

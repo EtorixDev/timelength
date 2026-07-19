@@ -32,9 +32,15 @@ class TimeLength:
         - Automatically called during initialization. Manually call if changes are made to `self.content` or `self.locale`.
     - `ago()` — Return a `datetime` from the past adjusted for `self.result`.
     - `hence()` — Return a `datetime` from the future adjusted for `self.result`.
-    - `to_milliseconds()`, `to_minutes()`, `to_hours()`, `to_days()`, `to_weeks()`, `to_months()`,
-        `to_years()`, `to_decades()`, `to_centuries()`
-        - Convert the parsed duration to the respective units of each method.
+    - `to_milliseconds()` — Convert the parsed duration to milliseconds.
+    - `to_minutes()` — Convert the parsed duration to minutes.
+    - `to_hours()` — Convert the parsed duration to hours.
+    - `to_days()` — Convert the parsed duration to days.
+    - `to_weeks()` — Convert the parsed duration to weeks.
+    - `to_months()` — Convert the parsed duration to months.
+    - `to_years()` — Convert the parsed duration to years.
+    - `to_decades()` — Convert the parsed duration to decades.
+    - `to_centuries()` — Convert the parsed duration to centuries.
 
     #### Raises
     - `NotALocaleError` when `locale` is not an instance of `Locale` or `Guess`.
@@ -51,7 +57,6 @@ class TimeLength:
 
     def __init__(self, content: str, locale: Locale | Guess | None = None) -> None:
         self.content: str = str(content)
-
         # self.locale must always be a Locale, so if Guess is passed, temporarily set it to the first
         # locale in Guess().locales to prevent a wasted initialization while the best locale is found.
         self.locale: Locale = locale.locales[0] if isinstance(locale, Guess) else (locale or English())
@@ -95,10 +100,7 @@ class TimeLength:
 
             # Sort most invalid to least invalid, breaking ties by least valid to most valid,
             # lastly breaking further ties by reverse alphabetical Locale name.
-            results.sort(
-                key=lambda res: (len(res[0].invalid), -len(res[0].valid), res[1].__class__.__name__), reverse=True
-            )
-
+            results.sort(key=lambda res: (len(res[0].invalid), -len(res[0].valid), res[1].__class__.__name__), reverse=True)
             self._result = results[-1][0]
             self.locale = deepcopy(results[-1][1])
 
@@ -301,6 +303,7 @@ class TimeLength:
             raise InvalidScaleError(scale.singular)
         else:
             val = self.result.seconds / scale.scale
+
             return round(val, max_precision) if max_precision is not None else val
 
     def _invalid_datetime(self, date: datetime, delta: timedelta, subtract: bool = False) -> bool:
@@ -311,17 +314,12 @@ class TimeLength:
 
         date_sec = date.timestamp()
         delta_sec = delta.total_seconds()
-
         # datetime.min and datetime.max error on Windows when using .timestamp()
         # so it is necessary to manually create the datetime objects.
         min_datetime_timestamp = datetime(1, 1, 1, 0, 0, 0, 0, tzinfo=timezone.utc).timestamp()
         max_datetime_timestamp = datetime(9999, 12, 31, 23, 59, 59, 999999, tzinfo=timezone.utc).timestamp()
 
-        return (
-            (date_sec + delta_sec < min_datetime_timestamp or date_sec + delta_sec > max_datetime_timestamp)
-            if not subtract
-            else (date_sec - delta_sec < min_datetime_timestamp or date_sec - delta_sec > max_datetime_timestamp)
-        )
+        return (date_sec + delta_sec < min_datetime_timestamp or date_sec + delta_sec > max_datetime_timestamp) if not subtract else (date_sec - delta_sec < min_datetime_timestamp or date_sec - delta_sec > max_datetime_timestamp)
 
     def _invalid_timedelta(self, first: timedelta, second: timedelta, subtract: bool = False) -> bool:
         """Check if the resultant `timedelta` would exceed the bounds supported by `timedelta`."""
@@ -329,17 +327,7 @@ class TimeLength:
         first_sec = first.total_seconds()
         second_sec = second.total_seconds()
 
-        return (
-            (
-                first_sec + second_sec < timedelta.min.total_seconds()
-                or first_sec + second_sec > timedelta.max.total_seconds()
-            )
-            if not subtract
-            else (
-                first_sec - second_sec < timedelta.min.total_seconds()
-                or first_sec - second_sec > timedelta.max.total_seconds()
-            )
-        )
+        return (first_sec + second_sec < timedelta.min.total_seconds() or first_sec + second_sec > timedelta.max.total_seconds()) if not subtract else (first_sec - second_sec < timedelta.min.total_seconds() or first_sec - second_sec > timedelta.max.total_seconds())
 
     def _convert_to_hhmmss(self, seconds: int | float) -> str:
         """Convert the passed seconds to `Days, HH:MM:SS.MS` format."""
@@ -365,7 +353,7 @@ class TimeLength:
 
     def __repr__(self) -> str:
         """Return a string representation of the TimeLength with attributes included."""
-        return f"TimeLength(content={json.dumps(self.content)}, locale={repr(self.locale)})"
+        return f"TimeLength(content={json.dumps(self.content)}, locale={self.locale!r})"
 
     def __add__(self, other: TimeLength | timedelta | float | int) -> TimeLength:
         """---
@@ -465,7 +453,7 @@ class TimeLength:
             return NotImplemented
 
     def __rsub__(self, other: datetime | timedelta) -> datetime | timedelta:
-        """
+        """---
         Get the difference between a a `datetime` or a `timedelta` and `self`.
 
         #### Arguments
@@ -494,7 +482,7 @@ class TimeLength:
             return NotImplemented
 
     def __mul__(self, other: float | int) -> TimeLength:
-        """
+        """---
         Get the absolute multiplication of `self` and a number.
 
         #### Arguments
@@ -520,7 +508,7 @@ class TimeLength:
     __rmul__ = __mul__
 
     def __truediv__(self, other: TimeLength | timedelta | float | int) -> TimeLength | float:
-        """
+        """---
         Get the division of `self` and a `TimeLength`, a `timedelta`, or a number.
 
         #### Arguments
@@ -550,7 +538,7 @@ class TimeLength:
             return NotImplemented
 
     def __rtruediv__(self, other: timedelta) -> float:
-        """
+        """---
         Get the division of a `timedelta` and `self`.
 
         #### Arguments
@@ -569,7 +557,7 @@ class TimeLength:
             return NotImplemented
 
     def __floordiv__(self, other: TimeLength | timedelta | float | int) -> TimeLength | float:
-        """
+        """---
         Get the floor division of `self` and a `TimeLength`, a `timedelta`, or a number.
 
         #### Arguments
@@ -599,7 +587,7 @@ class TimeLength:
             return NotImplemented
 
     def __rfloordiv__(self, other: timedelta) -> float:
-        """
+        """---
         Get the floor division of a `timedelta` and `self`.
 
         #### Arguments
@@ -618,7 +606,7 @@ class TimeLength:
             return NotImplemented
 
     def __mod__(self, other: TimeLength | timedelta | float | int) -> TimeLength:
-        """
+        """---
         Get the absolute modulo of `self` and a `TimeLength`, `timedelta`, or a number.
 
         #### Arguments
@@ -653,7 +641,7 @@ class TimeLength:
             return NotImplemented
 
     def __rmod__(self, other: timedelta) -> timedelta:
-        """
+        """---
         Get the modulo of a `TimeLength` or `timedelta` and `self`.
 
         #### Arguments
@@ -676,7 +664,7 @@ class TimeLength:
             return NotImplemented
 
     def __divmod__(self, other: TimeLength | timedelta | float | int) -> tuple[float, TimeLength]:
-        """
+        """---
         Get the divmod of `self` and a `TimeLength`, `timedelta`, or a number.
 
         #### Arguments
@@ -709,7 +697,7 @@ class TimeLength:
             return NotImplemented
 
     def __rdivmod__(self, other: timedelta) -> tuple[float, timedelta]:
-        """
+        """---
         Get the divmod of a `timedelta` and `self`.
 
         #### Arguments
@@ -731,12 +719,12 @@ class TimeLength:
             return NotImplemented
 
     def __pow__(self, other: float | int, mod: TimeLength | timedelta | float | int | None = None) -> TimeLength:
-        """
+        """---
         Get the absolute power of `self` and a number.
 
         #### Arguments
         - other: `float | int` — The number to raise `self` to.
-        - mod: `TimeLength | timedelta | float | int = None` — The object to modulo the result by.
+        - mod: `TimeLength | timedelta | float | int | None = None` — The object to modulo the result by.
 
         #### Returns
         - A `TimeLength` that represents the absolute power of `self` and the passed number, optionally moduloed by mod.
@@ -746,21 +734,13 @@ class TimeLength:
         - `ValueError` when `mod` resolves to zero.
         """
 
-        if not isinstance(other, (float, int)):
-            return NotImplemented
-        elif mod is not None and not isinstance(mod, (TimeLength, timedelta, float, int)):
+        if not isinstance(other, (float, int)) or (mod is not None and not isinstance(mod, (TimeLength, timedelta, float, int))):
             return NotImplemented
 
         if mod is None:
             result: float = abs(self.result.seconds**other)
         else:
-            mod_seconds: float = (
-                mod.result.seconds
-                if isinstance(mod, TimeLength)
-                else mod.total_seconds()
-                if isinstance(mod, timedelta)
-                else mod
-            )
+            mod_seconds: float = mod.result.seconds if isinstance(mod, TimeLength) else mod.total_seconds() if isinstance(mod, timedelta) else mod
 
             if mod_seconds == 0:
                 raise ValueError("pow() 3rd argument cannot be 0")
@@ -795,7 +775,7 @@ class TimeLength:
         return self
 
     def __gt__(self, other: TimeLength | timedelta | float | int) -> bool:
-        """
+        """---
         Check if `self` is greater than `other`.
 
         #### Arguments
@@ -808,18 +788,12 @@ class TimeLength:
         if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        other_seconds = (
-            other.result.seconds
-            if isinstance(other, TimeLength)
-            else other.total_seconds()
-            if isinstance(other, timedelta)
-            else other
-        )
+        other_seconds = other.result.seconds if isinstance(other, TimeLength) else other.total_seconds() if isinstance(other, timedelta) else other
 
         return self.result.seconds > other_seconds
 
     def __ge__(self, other: TimeLength | timedelta | float | int) -> bool:
-        """
+        """---
         Check if `self` is greater than or equal to other.
 
         #### Arguments
@@ -832,18 +806,12 @@ class TimeLength:
         if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        other_seconds = (
-            other.result.seconds
-            if isinstance(other, TimeLength)
-            else other.total_seconds()
-            if isinstance(other, timedelta)
-            else other
-        )
+        other_seconds = other.result.seconds if isinstance(other, TimeLength) else other.total_seconds() if isinstance(other, timedelta) else other
 
         return self.result.seconds >= other_seconds
 
     def __lt__(self, other: TimeLength | timedelta | float | int) -> bool:
-        """
+        """---
         Check if `self` is less than `other`.
 
         #### Arguments
@@ -856,18 +824,12 @@ class TimeLength:
         if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        other_seconds = (
-            other.result.seconds
-            if isinstance(other, TimeLength)
-            else other.total_seconds()
-            if isinstance(other, timedelta)
-            else other
-        )
+        other_seconds = other.result.seconds if isinstance(other, TimeLength) else other.total_seconds() if isinstance(other, timedelta) else other
 
         return self.result.seconds < other_seconds
 
     def __le__(self, other: TimeLength | timedelta | float | int) -> bool:
-        """
+        """---
         Check if `self` is less than or equal to `other`.
 
         #### Arguments
@@ -880,22 +842,16 @@ class TimeLength:
         if not isinstance(other, (TimeLength, timedelta, float, int)):
             return NotImplemented
 
-        other_seconds = (
-            other.result.seconds
-            if isinstance(other, TimeLength)
-            else other.total_seconds()
-            if isinstance(other, timedelta)
-            else other
-        )
+        other_seconds = other.result.seconds if isinstance(other, TimeLength) else other.total_seconds() if isinstance(other, timedelta) else other
 
         return self.result.seconds <= other_seconds
 
     def __eq__(self, other: object) -> bool:
-        """
+        """---
         Check if `self` is equal to `other`.
 
         #### Arguments
-        - other: `TimeLength | timedelta | float | int` — The object to compare to.
+        - other: `object` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is equal to `other` based on their seconds.
@@ -904,22 +860,16 @@ class TimeLength:
         if not isinstance(other, (TimeLength, timedelta, float, int)):
             return False
 
-        other_seconds = (
-            other.result.seconds
-            if isinstance(other, TimeLength)
-            else other.total_seconds()
-            if isinstance(other, timedelta)
-            else other
-        )
+        other_seconds = other.result.seconds if isinstance(other, TimeLength) else other.total_seconds() if isinstance(other, timedelta) else other
 
         return self.result.seconds == other_seconds
 
     def __ne__(self, other: object) -> bool:
-        """
+        """---
         Check if `self` is not equal to `other`.
 
         #### Arguments
-        - other: `TimeLength | timedelta | float | int` — The object to compare to.
+        - other: `object` — The object to compare to.
 
         #### Returns
         - A `bool` indicating if `self` is not equal to `other` based on their seconds.
@@ -928,12 +878,6 @@ class TimeLength:
         if not isinstance(other, (TimeLength, timedelta, float, int)):
             return True
 
-        other_seconds = (
-            other.result.seconds
-            if isinstance(other, TimeLength)
-            else other.total_seconds()
-            if isinstance(other, timedelta)
-            else other
-        )
+        other_seconds = other.result.seconds if isinstance(other, TimeLength) else other.total_seconds() if isinstance(other, timedelta) else other
 
         return self.result.seconds != other_seconds

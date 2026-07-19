@@ -4,7 +4,8 @@ import json
 import os
 from fractions import Fraction
 from importlib import util
-from typing import Any, Callable
+from types import ModuleType
+from typing import Any, Callable, Protocol, cast
 
 from timelength.dataclasses import Numeral, ParsedTimeLength, ParserSettings, Scale
 from timelength.enums import FailureFlags, NumeralType
@@ -17,31 +18,45 @@ from timelength.errors import (
 )
 
 
+class _ModuleLoader(Protocol):
+    def exec_module(self, module: ModuleType) -> None: ...
+
+
 class Locale:
     """---
     Represents a `Locale` context used for parsing lengths of time.
 
     #### Attributes
-    - config_location: `str | os.PathLike = "english.json"` — The path to the config file for this `Locale`.
-    - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
-        - If passed, flags loaded from the config will be overwritten.
-    - settings: `ParserSettings | None = None` — The settings for the parser.
-        - If passed, settings loaded from the config will be overwritten.
+    - flags: `FailureFlags` — The flags that will cause parsing to fail.
+    - settings: `ParserSettings` — The parser behavior settings.
+    - millisecond: `Scale` — The millisecond scale.
+    - second: `Scale` — The second scale.
+    - minute: `Scale` — The minute scale.
+    - hour: `Scale` — The hour scale.
+    - day: `Scale` — The day scale.
+    - week: `Scale` — The week scale.
+    - month: `Scale` — The month scale.
+    - year: `Scale` — The year scale.
+    - decade: `Scale` — The decade scale.
+    - century: `Scale` — The century scale.
+    - scales: `list[Scale]` — Every scale available to the locale.
+    - numerals: `list[Numeral]` — Every numeral available to the locale.
+    - extra_data: `dict[str, Any]` — Locale-specific parser data.
 
     #### Properties
-    - `parser` — Return the parser function attached to the Locale.
-    - `connectors` — Return the connectors if valid.
-    - `segmentors` — Return the segmentors if valid.
-    - `allowed_terms` — Return the allowed terms.
-    - `hhmmss_delimiters` — Return the hhmmss delimiters if valid.
-    - `decimal_delimiters` — Return the decimal delimiters if valid.
-    - `thousand_delimiters` — Return the thousand delimiters if valid.
-    - `fraction_delimiters` — Return the fraction delimiters if valid.
-    - `delimiters` — Return a list of all delimiters if valid.
-    - `specials` — Return a list of all special characters.
-    - `usable_scales` — Return a list of valid and enabled scales.
-    - `usable_numerals` — Return a list of valid and enabled numerals.
-    - `base_scale` — Return the base scale for the locale.
+    - parser: `Callable[[str, Locale], ParsedTimeLength]` — The parser function attached to the locale.
+    - connectors: `list[str]` — The valid connectors.
+    - segmentors: `list[str]` — The valid segmentors.
+    - allowed_terms: `list[str]` — The allowed terms.
+    - decimal_delimiters: `list[str]` — The valid decimal delimiters.
+    - thousand_delimiters: `list[str]` — The valid thousand delimiters.
+    - hhmmss_delimiters: `list[str]` — The valid HHMMSS delimiters.
+    - fraction_delimiters: `list[str]` — The valid fraction delimiters.
+    - delimiters: `list[str]` — All valid delimiters.
+    - specials: `list[str]` — All special characters.
+    - usable_scales: `list[Scale]` — The valid and enabled scales.
+    - usable_numerals: `list[Numeral]` — The valid and enabled numerals.
+    - base_scale: `Scale` — The base scale for the locale.
 
     #### Methods
     - `get_scale()` — Get the scale that contains a specific value in its terms list, if any.
@@ -61,32 +76,25 @@ class Locale:
         flags: FailureFlags | None = None,
         settings: ParserSettings | None = None,
     ) -> None:
-        self._config_location: str = (
-            os.fspath(config_location) if isinstance(config_location, os.PathLike) else config_location
-        )
+        self._config_location: str = os.fspath(config_location) if isinstance(config_location, os.PathLike) else config_location
         base_dir: str = os.path.dirname(__file__)
         locale_path: str = os.path.join(base_dir, "locales", self._config_location)
         full_json_path: str = locale_path if os.path.exists(locale_path) else self._config_location
         self._config: dict[str, Any] = self._load_config(full_json_path)
-
         self._parser_file: str = self._get_config_or_raise("parser_file", str)
-        self._parser: Callable[[str, Locale], ParsedTimeLength] = self._load_parser(base_dir)
-
+        self._parser: Callable[[str, Locale], ParsedTimeLength] | None = self._load_parser(base_dir)
         self.flags: FailureFlags = self._load_flags(flags)
         self.settings: ParserSettings = self._load_settings(settings)
-
         self._connectors: list[str] = self._get_config_or_raise("connectors", list)
         self._segmentors: list[str] = self._get_config_or_raise("segmentors", list)
         self._validate_connectors_segmentors()
-
         self._allowed_terms: list[str] = self._get_config_or_raise("allowed_terms", list)
         self._hhmmss_delimiters: list[str] = self._get_config_or_raise("hhmmss_delimiters", list)
         self._decimal_delimiters: list[str] = self._get_config_or_raise("decimal_delimiters", list)
         self._thousand_delimiters: list[str] = self._get_config_or_raise("thousand_delimiters", list)
         self._fraction_delimiters: list[str] = self._get_config_or_raise("fraction_delimiters", list)
         self._validate_delimiters()
-
-        self._scales_json = self._get_config_or_raise("scales", dict)
+        self._scales_json: dict[str, dict[str, Any]] = self._get_config_or_raise("scales", dict)
         self.millisecond: Scale
         self.second: Scale
         self.minute: Scale
@@ -100,11 +108,9 @@ class Locale:
         self.scales: list[Scale] = []
         self._load_scales(self._scales_json)
         self._validate_scales()
-
         self._numerals_json: dict[str, dict[str, Any]] = self._get_config_or_raise("numerals", dict)
         self.numerals: list[Numeral] = []
         self._load_numerals(self._numerals_json)
-
         self.extra_data: dict[str, Any] = self._get_config_or_raise("extra_data", dict)
 
     @property
@@ -113,6 +119,7 @@ class Locale:
 
         if self._parser and callable(self._parser):
             self._validate()
+
             return self._parser
 
         raise InvalidParserError(self)
@@ -120,7 +127,9 @@ class Locale:
     @property
     def connectors(self) -> list[str]:
         """Return the connectors if valid."""
+
         self._validate_connectors_segmentors()
+
         return self._connectors
 
     @connectors.setter
@@ -131,7 +140,9 @@ class Locale:
     @property
     def segmentors(self) -> list[str]:
         """Return the segmentors if valid."""
+
         self._validate_connectors_segmentors()
+
         return self._segmentors
 
     @segmentors.setter
@@ -151,7 +162,9 @@ class Locale:
     @property
     def decimal_delimiters(self) -> list[str]:
         """Return the decimal delimiters if valid."""
+
         self._validate_delimiters()
+
         return self._decimal_delimiters
 
     @decimal_delimiters.setter
@@ -162,7 +175,9 @@ class Locale:
     @property
     def thousand_delimiters(self) -> list[str]:
         """Return the thousand delimiters if valid."""
+
         self._validate_delimiters()
+
         return self._thousand_delimiters
 
     @thousand_delimiters.setter
@@ -173,7 +188,9 @@ class Locale:
     @property
     def hhmmss_delimiters(self) -> list[str]:
         """Return the hhmmss delimiters if valid."""
+
         self._validate_delimiters()
+
         return self._hhmmss_delimiters
 
     @hhmmss_delimiters.setter
@@ -184,7 +201,9 @@ class Locale:
     @property
     def fraction_delimiters(self) -> list[str]:
         """Return the fraction delimiters if valid."""
+
         self._validate_delimiters()
+
         return self._fraction_delimiters
 
     @fraction_delimiters.setter
@@ -195,10 +214,10 @@ class Locale:
     @property
     def delimiters(self) -> list[str]:
         """Return a list of all delimiters if valid."""
+
         self._validate_delimiters()
-        return (
-            self._hhmmss_delimiters + self._decimal_delimiters + self._thousand_delimiters + self._fraction_delimiters
-        )
+
+        return self._hhmmss_delimiters + self._decimal_delimiters + self._thousand_delimiters + self._fraction_delimiters
 
     @property
     def specials(self) -> list[str]:
@@ -220,12 +239,12 @@ class Locale:
         """---
         Return the base `Scale` for `self`.
 
-        #### Raises
-        - `NoValidScalesError` when no valid and enabled scales are found.
-
         #### Returns
         - The base `Scale` for the locale. By default this is `Second`, but if it is not valid or enabled,
-        the first valid and enabled scale will be used.
+            the first valid and enabled scale will be used.
+
+        #### Raises
+        - `NoValidScalesError` when no valid and enabled scales are found.
         """
 
         base = self.second if self.second.enabled and self.second.valid else None
@@ -243,18 +262,22 @@ class Locale:
         """---
         Get a `Scale` from a term.
 
-        #### Raises
-        - `InvalidScaleError` when the scale is not valid.
+        #### Arguments
+        - term: `str` — The scale term to find.
 
         #### Returns
         - The `Scale` that contains the term in its terms list.
         - `None` if no scale contains the term.
+
+        #### Raises
+        - `InvalidScaleError` when the scale is not valid.
         """
 
         for scale in self.scales:
             if term in scale.terms:
                 if not scale.valid:
                     raise InvalidScaleError(scale.singular)
+
                 return scale
 
         return None
@@ -263,31 +286,35 @@ class Locale:
         """---
         Get a `Numeral` from a term.
 
-        #### Raises
-        - `InvalidNumeralError` when the numeral is not valid.
+        #### Arguments
+        - term: `str` — The numeral term to find.
 
         #### Returns
         - The `Numeral` that contains the term in its terms list.
         - `None` if no numeral contains the term.
+
+        #### Raises
+        - `InvalidNumeralError` when the numeral is not valid.
         """
 
         for numeral in self.numerals:
             if term in numeral.terms:
                 if not numeral.valid:
                     raise InvalidNumeralError(numeral.name)
+
                 return numeral
 
         return None
 
     def _load_config(self, json_path: str) -> dict[str, Any]:
         if not os.path.exists(json_path) or not os.path.isfile(json_path):
-            raise InvalidLocaleError(self, f"The provided config does not exist: {repr(json_path)}")
+            raise InvalidLocaleError(self, f"The provided config does not exist: {json_path!r}")
 
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             config: dict[str, Any] = json.load(f)
 
         if not config:
-            raise InvalidLocaleError(self, f"The provided config is empty: {repr(json_path)}")
+            raise InvalidLocaleError(self, f"The provided config is empty: {json_path!r}")
 
         return config
 
@@ -295,13 +322,7 @@ class Locale:
         """Load the parser function from the parser file."""
 
         parser_path = os.path.join(base_dir, "parsers", self._parser_file)
-        full_parser_path: str | None = (
-            parser_path
-            if os.path.exists(parser_path)
-            else self._parser_file
-            if os.path.exists(self._parser_file)
-            else None
-        )
+        full_parser_path: str | None = parser_path if os.path.exists(parser_path) else self._parser_file if os.path.exists(self._parser_file) else None
         module_name, _ = os.path.splitext(os.path.basename(full_parser_path)) if full_parser_path else ("", "")
 
         try:
@@ -309,12 +330,13 @@ class Locale:
                 raise FileNotFoundError
 
             spec = util.spec_from_file_location(module_name, full_parser_path)
+            loader = cast("_ModuleLoader | None", getattr(spec, "loader", None)) if spec else None
 
-            if not spec or not hasattr(spec, "loader") or not spec.loader:
+            if not spec or not loader:
                 raise FileNotFoundError
 
             module = util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            loader.exec_module(module)
             parser: Callable[[str, Locale], ParsedTimeLength] | None = getattr(module, module_name, None)
 
             if not parser:
@@ -322,11 +344,9 @@ class Locale:
             else:
                 return parser
         except (ModuleNotFoundError, FileNotFoundError) as e:
-            raise InvalidLocaleError(self, f"Parser file not found: {repr(self._parser_file)}") from e
+            raise InvalidLocaleError(self, f"Parser file not found: {self._parser_file!r}") from e
         except AttributeError as e:
-            raise InvalidLocaleError(
-                self, f"Parser function {repr(module_name)} not found in parser file: {repr(self._parser_file)}"
-            ) from e
+            raise InvalidLocaleError(self, f"Parser function {module_name!r} not found in parser file: {self._parser_file!r}") from e
 
     def _load_flags(self, flags: FailureFlags | None) -> FailureFlags:
         """Load the flags from the config or the passed flags."""
@@ -338,7 +358,7 @@ class Locale:
                 try:
                     combined_flags |= FailureFlags[flag]
                 except KeyError as e:
-                    raise InvalidLocaleError(self, f"Invalid flag provided in config: {repr(flag)}") from e
+                    raise InvalidLocaleError(self, f"Invalid flag provided in config: {flag!r}") from e
 
             return combined_flags
 
@@ -353,16 +373,17 @@ class Locale:
             except TypeError as e:
                 if "got an unexpected keyword argument" in str(e):
                     key: str = str(e).split("'")[1]
-                    raise InvalidLocaleError(self, f"Invalid setting provided in config: {repr(key)}") from e
+
+                    raise InvalidLocaleError(self, f"Invalid setting provided in config: {key!r}") from e
                 else:
                     raise InvalidLocaleError(self, "Invalid settings provided in config.") from e
 
         return settings
 
-    def _load_scales(self, scales_json: dict) -> None:
+    def _load_scales(self, scales_json: dict[str, dict[str, Any]]) -> None:
         """Load the scales from the config."""
 
-        def process_scale(scale_json: dict, scale_name: str) -> None:
+        def process_scale(scale_json: dict[str, Any], scale_name: str) -> None:
             if not scale_name:
                 raise InvalidScaleError(scale_name, "A scale key is empty.")
             elif not all(key in scale_json for key in ["scale", "singular", "plural", "terms"]):
@@ -374,11 +395,10 @@ class Locale:
 
                     scale_json["terms"] = tuple(scale_json["terms"])
                     scale_obj: Scale = Scale(**scale_json)
-
                     setattr(self, scale_name, scale_obj)
                     self.scales.append(scale_obj)
                 except (ValueError, TypeError) as e:
-                    raise InvalidScaleError(scale_name, f"{repr(scale_name)} contains invalid values.") from e
+                    raise InvalidScaleError(scale_name, f"{scale_name!r} contains invalid values.") from e
 
         default_scales = [
             "millisecond",
@@ -404,7 +424,7 @@ class Locale:
             if scale_name not in default_scales:
                 process_scale(scales_json[scale_name], scale_name)
 
-    def _load_numerals(self, numerals_json: dict) -> None:
+    def _load_numerals(self, numerals_json: dict[str, dict[str, Any]]) -> None:
         """Load the numerals from the config."""
 
         for numeral_name in numerals_json:
@@ -421,15 +441,9 @@ class Locale:
 
                 numeral_type: NumeralType = NumeralType(raw_type)
             except ValueError as e:
-                raise InvalidNumeralError(
-                    numeral_name, f"An invalid NumeralType was provided for {repr(numeral_name)}."
-                ) from e
+                raise InvalidNumeralError(numeral_name, f"An invalid NumeralType was provided for {numeral_name!r}.") from e
 
-            value: float = (
-                float(Fraction(numerals_json[numeral_name]["value"]))
-                if isinstance(numerals_json[numeral_name]["value"], str)
-                else float(numerals_json[numeral_name]["value"])
-            )
+            value: float = float(Fraction(numerals_json[numeral_name]["value"])) if isinstance(numerals_json[numeral_name]["value"], str) else float(numerals_json[numeral_name]["value"])
             terms: tuple[str, ...] = tuple(numerals_json[numeral_name]["terms"])
             self.numerals.append(Numeral(numeral_name, numeral_type, value, terms))
 
@@ -439,10 +453,10 @@ class Locale:
         value = self._config.get(key)
 
         if value is None:
-            raise InvalidLocaleError(self, f"No {repr(key)} key found in config.")
+            raise InvalidLocaleError(self, f"No {key!r} key found in config.")
 
         if not isinstance(value, target_type):
-            raise InvalidLocaleError(self, f"{repr(key)} key in config is not of type {repr(target_type.__name__)}.")
+            raise InvalidLocaleError(self, f"{key!r} key in config is not of type {target_type.__name__!r}.")
 
         return value
 
@@ -457,9 +471,7 @@ class Locale:
     def _validate_delimiters(self) -> bool:
         """Validate the values for the delimiters."""
 
-        all_delimiters = (
-            self._decimal_delimiters + self._thousand_delimiters + self._hhmmss_delimiters + self._fraction_delimiters
-        )
+        all_delimiters = self._decimal_delimiters + self._thousand_delimiters + self._hhmmss_delimiters + self._fraction_delimiters
 
         if len(all_delimiters) != len(set(all_delimiters)):
             raise InvalidLocaleError(self, "Delimiters may not have overlap.")
@@ -489,97 +501,29 @@ class Locale:
 
     def __repr__(self) -> str:
         """Return a string representation of the locale with attributes included."""
-        return f"{self.__str__()}(config_location={json.dumps(self._config_location)}, flags={repr(self.flags)}, settings={repr(self.settings)})"
+        return f"{self.__str__()}(config_location={json.dumps(self._config_location)}, flags={self.flags!r}, settings={self.settings!r})"
 
 
 class English(Locale):
-    """---
-    Represents the `English` context used for parsing lengths of time.
-
-    #### Attributes
-    - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
-        - If not `None`, flags loaded from the config will be overwritten.
-    - settings: `ParserSettings | None = None` — The settings for the parser.
-        - If not `None`, settings loaded from the config will be overwritten.
-
-    #### Properties
-    - `parser` — Return the parser function attached to the Locale.
-    - `connectors` — Return the connectors if valid.
-    - `segmentors` — Return the segmentors if valid.
-    - `allowed_terms` — Return the allowed terms.
-    - `hhmmss_delimiters` — Return the hhmmss delimiters if valid.
-    - `decimal_delimiters` — Return the decimal delimiters if valid.
-    - `thousand_delimiters` — Return the thousand delimiters if valid.
-    - `fraction_delimiters` — Return the fraction delimiters if valid.
-    - `delimiters` — Return a list of all delimiters if valid.
-    - `specials` — Return a list of all special characters.
-    - `usable_scales` — Return a list of valid and enabled scales.
-    - `usable_numerals` — Return a list of valid and enabled numerals.
-    - `base_scale` — Return the base scale for the locale.
-
-    #### Methods
-    - `get_scale()` — Get the scale that contains a specific value in its terms list, if any.
-    - `get_numeral()` — Get the numeral that contains a specific value in its terms list, if any.
-
-    #### Raises
-    - `InvalidLocaleError` when `english.json` does not exist or is malformed.
-    - `InvalidParserError` when `self.parser` is not callable.
-    - `NoValidScalesError` when no `Scale` is valid during validation.
-    - `InvalidScaleError` when a `Scale` is invalid during initialization.
-    - `InvalidNumeralError` when a `Numeral` is invalid during initialization.
-    """
+    """An English duration-parsing locale."""
 
     def __init__(self, flags: FailureFlags | None = None, settings: ParserSettings | None = None) -> None:
         super().__init__("english.json", flags, settings)
 
     def __repr__(self) -> str:
         """Return a string representation of the locale with attributes included."""
-        return f"English(flags={repr(self.flags)}, settings={repr(self.settings)})"
+        return f"English(flags={self.flags!r}, settings={self.settings!r})"
 
 
 class Spanish(Locale):
-    """---
-    Represents the `Spanish` context used for parsing lengths of time.
-
-    #### Attributes
-    - flags: `FailureFlags | None = None` — The flags that will cause parsing to fail.
-        - If not `None`, flags loaded from the config will be overwritten.
-    - settings: `ParserSettings | None = None` — The settings for the parser.
-        - If not `None`, settings loaded from the config will be overwritten.
-
-    #### Properties
-    - `parser` — Return the parser function attached to the Locale.
-    - `connectors` — Return the connectors if valid.
-    - `segmentors` — Return the segmentors if valid.
-    - `allowed_terms` — Return the allowed terms.
-    - `hhmmss_delimiters` — Return the hhmmss delimiters if valid.
-    - `decimal_delimiters` — Return the decimal delimiters if valid.
-    - `thousand_delimiters` — Return the thousand delimiters if valid.
-    - `fraction_delimiters` — Return the fraction delimiters if valid.
-    - `delimiters` — Return a list of all delimiters if valid.
-    - `specials` — Return a list of all special characters.
-    - `usable_scales` — Return a list of valid and enabled scales.
-    - `usable_numerals` — Return a list of valid and enabled numerals.
-    - `base_scale` — Return the base scale for the locale.
-
-    #### Methods
-    - `get_scale()` — Get the scale that contains a specific value in its terms list, if any.
-    - `get_numeral()` — Get the numeral that contains a specific value in its terms list, if any.
-
-    #### Raises
-    - `InvalidLocaleError` when `spanish.json` does not exist or is malformed.
-    - `InvalidParserError` when `self.parser` is not callable.
-    - `NoValidScalesError` when no `Scale` is valid during validation.
-    - `InvalidScaleError` when a `Scale` is invalid during initialization.
-    - `InvalidNumeralError` when a `Numeral` is invalid during initialization.
-    """
+    """A Spanish duration-parsing locale."""
 
     def __init__(self, flags: FailureFlags | None = None, settings: ParserSettings | None = None) -> None:
         super().__init__("spanish.json", flags, settings)
 
     def __repr__(self) -> str:
         """Return a string representation of the locale with attributes included."""
-        return f"Spanish(flags={repr(self.flags)}, settings={repr(self.settings)})"
+        return f"Spanish(flags={self.flags!r}, settings={self.settings!r})"
 
 
 class Guess:
@@ -608,7 +552,7 @@ class Guess:
             or to update the settings post-initialization.
 
     #### Raises
-    - `InvalidLocaleError` if any of the `Locale` configs are malformed or missing.
+    - `InvalidLocaleError` when any of the `Locale` configs are malformed or missing.
     """
 
     def __init__(
@@ -618,6 +562,7 @@ class Guess:
     ) -> None:
         self._flags: FailureFlags | None = flags
         self._settings: ParserSettings | None = settings
+
         self.locales: list[Locale] = [
             English(flags=flags, settings=settings),
             Spanish(flags=flags, settings=settings),
@@ -639,6 +584,8 @@ class Guess:
 
     def __repr__(self) -> str:
         """Return a string representation of the Guess with attributes included."""
+
         flags_repr = repr(self.flags) if self.flags is not None else None
         settings_repr = repr(self.settings) if self.settings is not None else None
+
         return f"Guess(flags={flags_repr}, settings={settings_repr})"

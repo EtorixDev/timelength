@@ -66,7 +66,6 @@ class FailureFlags(IntFlag):
 
     #### Members
     - `NONE` — No failures will cause parsing to fail.
-    - `ALL` — Any failure will cause parsing to fail.
     - `MALFORMED_CONTENT` — The fallback when something that shouldn't have happened, happened.
     - `UNKNOWN_TERM` — The parsed value was not recognized from the terms or symbols in the config.
     - `MALFORMED_DECIMAL` — Multiple decimals were attempted within a singular decimal segment.
@@ -75,15 +74,15 @@ class FailureFlags(IntFlag):
     - `MALFORMED_HHMMSS` — An HH:MM:SS was attempted but had more segments than enabled scales or was not formatted correctly.
     - `LONELY_VALUE` — A value was parsed with no paired scale.
     - `LONELY_SCALE` — A scale was parsed with no paired value.
-    - `LEADING_SCALE` — A scale was parsed at the beginning of the input.
     - `DUPLICATE_SCALE` — The same scale was parsed multiple times.
     - `CONSECUTIVE_CONNECTOR` — More than the allowed number of connectors were parsed in a row.
-    - `CONSECUTIVE_SEGMENTORS` — More than the allowed number of segmentors were parsed in a row.
-    - `CONSECUTIVE_SPECIALS` — More than the allowed number of special characters were parsed in a row.
+    - `CONSECUTIVE_SEGMENTOR` — More than the allowed number of segmentors were parsed in a row.
+    - `CONSECUTIVE_SPECIAL` — More than the allowed number of special characters were parsed in a row.
     - `MISPLACED_ALLOWED_TERM` — An allowed term was found in the middle of a segment/sentence.
     - `MISPLACED_SPECIAL` — A special character was found in the middle of a segment/sentence.
     - `UNUSED_OPERATOR` — A term of the operator numeral was parsed but unused on any values.
     - `AMBIGUOUS_MULTIPLIER` — More than one multiplier was parsed for a single segment which may be ambiguous.
+    - `ALL` — Any failure will cause parsing to fail.
     """
 
     NONE = 0
@@ -103,6 +102,7 @@ class FailureFlags(IntFlag):
     MISPLACED_SPECIAL = auto()
     UNUSED_OPERATOR = auto()
     AMBIGUOUS_MULTIPLIER = auto()
+
     ALL = (
         MALFORMED_CONTENT
         | UNKNOWN_TERM
@@ -122,16 +122,16 @@ class FailureFlags(IntFlag):
         | AMBIGUOUS_MULTIPLIER
     )
 
-    def _get_flags(self) -> list:
+    def _get_flags(self) -> list[str]:
         return [f"FailureFlags.{flag._name_}" for flag in FailureFlags if flag and flag in self]
 
     def __str__(self) -> str:
+        """Return the active flag names without their enum prefix."""
         return " | ".join(self._get_flags()).replace("FailureFlags.", "") or "NONE"
 
     def __repr__(self) -> str:
+        """Return an evaluable representation of the active flags."""
+
         flags = self._get_flags()
-        return (
-            ("(" if len(flags) > 1 else "")
-            + (" | ".join(flags) or "FailureFlags.NONE")
-            + (")" if len(flags) > 1 else "")
-        )
+
+        return ("(" if len(flags) > 1 else "") + (" | ".join(flags) or "FailureFlags.NONE") + (")" if len(flags) > 1 else "")

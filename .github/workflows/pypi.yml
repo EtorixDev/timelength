@@ -1,25 +1,28 @@
 name: Publish
 
 on:
-    release:
-        types:
-            - "published"
+  release:
+    types: [published]
+
+permissions:
+  contents: read
 
 jobs:
-    publish:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - name: Set up Python
-              uses: actions/setup-python@v5
-              with:
-                  python-version: "3.12"
-            - name: Set up uv
-              uses: astral-sh/setup-uv@v5
-            - name: Build and Publish
-              shell: bash
-              env:
-                  UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-              run: |
-                  uv build
-                  uv publish
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@v8.3.2
+        with:
+          version: "0.11.28"
+      - run: uv sync --frozen
+      - run: uv run --frozen python scripts/verify.py
+      - run: uv build --no-sources
+      - run: uv run --isolated --no-project --with dist/*.whl tests/smoke_test.py
+      - run: uv run --isolated --no-project --with dist/*.tar.gz tests/smoke_test.py
+      - run: uv publish
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

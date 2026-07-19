@@ -1,45 +1,87 @@
 [project]
 name = "timelength"
-version = "3.0.3"
-description = "A flexible python duration parser designed for human readable lengths of time."
+version = "3.0.4"
+description = "A flexible Python duration parser for human-readable lengths of time."
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Etorix", email = "admin@etorix.dev" }]
 keywords = ["timelength", "duration", "parser", "parsing", "time", "datetime", "timedelta"]
 classifiers = [
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14"
+    "Programming Language :: Python :: 3.14",
+    "Typing :: Typed",
 ]
 dependencies = []
 
 [project.urls]
-Homepage = "https://pypi.org/project/timelength/"
-Repository = "https://github.com/EtorixDev/timelength/"
+Homepage = "https://github.com/EtorixDev/timelength"
+Documentation = "https://github.com/EtorixDev/timelength#readme"
+Issues = "https://github.com/EtorixDev/timelength/issues"
+Source = "https://github.com/EtorixDev/timelength"
 Sponsor = "https://github.com/sponsors/EtorixDev"
 Donate = "https://ko-fi.com/Etorix"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.11.10,<0.12.0",
-    "pytest>=8.3.5,<9.0.0",
-    "pytest-cov>=6.1.1,<7.0.0",
-    "pytest-mock>=3.14.0,<4.0.0",
-    "tox>=4.26.0,<5.0.0",
+    "etdpystyle; python_version >= '3.10'",
+    "pyright>=1.1.411,<1.2.0",
+    "pytest>=8.4.2,<9.0.0; python_version < '3.10'",
+    "pytest>=9.1.1,<10.0.0; python_version >= '3.10'",
+    "pytest-cov>=7.1.0,<8.0.0",
+    "pytest-mock>=3.15.1,<4.0.0",
+    "ruff>=0.15.20,<0.16.0",
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = [
+    "hatchling>=1.27.0,<1.30.1; python_version < '3.10'",
+    "hatchling>=1.30.1,<2.0.0; python_version >= '3.10'",
+]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["timelength"]
+packages = ["src/timelength"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/timelength", "scripts", "tests", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["src/timelength"]
+
+[tool.coverage.report]
+fail_under = 99
+show_missing = true
+skip_covered = true
 
 [tool.ruff]
-line-length = 120
+line-length = 320
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
+
+[tool.pyright]
+include = ["src", "scripts", "tests"]
+pythonVersion = "3.9"
+typeCheckingMode = "strict"
+venv = ".venv"
+venvPath = "."
+reportUnnecessaryIsInstance = false
+
+[tool.uv]
+exclude-newer = "2 weeks"
+
+[tool.uv.sources]
+etdpystyle = { git = "https://github.com/EtorixDev/etdpystyle.git" }

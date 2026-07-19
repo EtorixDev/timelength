@@ -3,10 +3,9 @@
 [![](https://img.shields.io/pypi/pyversions/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
 [![](https://img.shields.io/pypi/dm/timelength.svg?style=flat-square&color=5677a6)](https://pypi.org/project/timelength/)
 [![](https://img.shields.io/github/actions/workflow/status/EtorixDev/timelength/tests.yml?branch=main&style=flat-square&color=51a851)](https://github.com/EtorixDev/timelength)
-[![](https://img.shields.io/badge/coverage-100%25-41c241?style=flat-square&color=51a851)](https://github.com/EtorixDev/timelength)
 [![](https://img.shields.io/pypi/l/timelength.svg?style=flat-square&color=51a851)](https://pypi.org/project/timelength/)
 
-A flexible python duration parser designed for human readable lengths of time, including long form durations such as `1 day, 5 hours, and 30 seconds`, short form durations such as `1d5h30s`, numerals such as `twelve hours`, HHMMSS such as `12:30:15`, and a mix thereof such as `1 day 5h 30s`.
+A flexible Python duration parser for human-readable lengths of time, including long-form durations such as `1 day, 5 hours, and 30 seconds`, short-form durations such as `1d5h30s`, numerals such as `twelve hours`, HHMMSS such as `12:30:15`, and mixtures such as `1 day 5h 30s`.
 
 - [Installation](#installation)
 - [Usage](#usage)
@@ -95,7 +94,7 @@ print(tl.result.valid)
 To put it simply, `FailureFlags` is used to determine if an item that is in the invalid items tuple should invalidate the parsing as a whole, whereas `ParserSettings` is used to determine if certain customizable situations should even result in an item being added to the invalid items tuple to begin with.
 
 ### FailureFlags
-The members of the `FailureFlags` IntEnum are:
+The members of the `FailureFlags` `IntFlag` are:
 - `NONE` — No failures will cause parsing to fail.
 - `ALL` — Any failure will cause parsing to fail.
 - `MALFORMED_CONTENT` — The fallback when something that shouldn't have happened, happened.
@@ -125,9 +124,9 @@ The members of the `FailureFlags` IntEnum are:
     - Ex: `1!h 2min`
 - `MISPLACED_SPECIAL` — A special character was found in the middle of a segment/sentence.
     - Ex: `1, /2`
-- `UNUSED_OPERATION` — A term of the operation numeral was parsed but unused on any values.
+- `UNUSED_OPERATOR` — An operator numeral was parsed but not applied to any values.
     - Ex: `2 min of`
-- `AMBIGUOUS_MULTIPLIERS` — More than one multiplier was parsed for a single segment which may be ambiguous.
+- `AMBIGUOUS_MULTIPLIER` — More than one multiplier was parsed for a single segment, making it ambiguous.
     - Ex: `half of a quarter of two minutes and 30s`
 
 ### ParserSettings
@@ -139,7 +138,7 @@ The members of the `FailureFlags` IntEnum are:
   the config from being used in the middle of a segment, thus interrupting a value/scale pair.
     - The affected segment will become abandoned and added to the invalid list.
     - The terms may still be used at the beginning or end of a segment/sentence.
-    - If `False`, The terms will be ignored (within other limitations) and not effect parsing.
+    - If `False`, the terms will be ignored (within other limitations) and not affect parsing.
 - allow_duplicate_scales: `bool = True` — Allow scales to be parsed multiple times, stacking their values.
     - If `False`, the first scale will be used and subsequent duplicates will be added to the invalid list.
 - allow_thousands_extra_digits: `bool = False` — Allow thousands to be parsed with more than three digits following a thousand delimiter.
@@ -255,7 +254,7 @@ If you have any custom locales you would like to be included in the possible res
 3. **HHMMSS**
     - It is not strictly adherent to typical `HH:MM:SS` standards. Any parsable numbers work in each slot, whether they are single digits, multiple digits, or include decimals.
         - For example, `2.56:27/3:270:19.2231` is a valid input in place of `2.56 days, 9 hours, 270 minutes, and 19.2231 seconds`.
-        - It also accepts a single connector, such as a space, between deliminators. Example: `2: 6: 3`.
+        - It also accepts a single connector, such as a space, between delimiters. Example: `2: 6: 3`.
     - Supports up to as many segments as there are scales defined, including custom scales (10 default, `Millisecond` to `Century`).
         - The segments are parsed in reverse order, so smallest to largest (the order defined in the config and therefore the order loaded into the `Locale`, may differ for custom defined `Scale`s) to ensure the correct scales are applied.
             - EXCEPTION: The default base from which `HH:MM:SS` starts at is `Second`. Any scales (typically of lesser value) listed prior in the config, or appended to the scales list before `Second` in the case of custom scales, will not be utilized unless `Second` is disabled or as many `HH:MM:SS` segments are parsed as there are scales defined.
@@ -265,7 +264,7 @@ If you have any custom locales you would like to be included in the possible res
 ## Supported Locales
 1. English
 2. Spanish
-3. Basic Custom 
+3. Basic Custom
     - Copy & modify an existing config with new terms as long as your new `Locale` follows the existing config parser's grammar structure
 4. Advanced Custom
     - Write your own parsing logic if your `Locale`'s grammar structure differs too drastically (PRs welcome)
@@ -275,7 +274,7 @@ If you have any custom locales you would like to be included in the possible res
 
 **Ensure the JSON being used is from a trusted source, as the parser is loaded dynamically based on the file specified in the JSON. This could allow for unintended code execution if an unsafe config is loaded.**
 
-Valid JSONs must include the following keys: 
+Valid JSONs must include the following keys:
 - `connectors`
     - Characters/words that join two parts of the same segment.
     - Must have at least one value.
@@ -293,7 +292,7 @@ Valid JSONs must include the following keys:
 - `fraction_delimiters`
     - Characters used to form fractions. Can't have overlap with `hhmmss_delimiters`, `decimal_delimiters`, or `thousand_delimiters`.
 - `parser_file`
-    - The name of this locale's parser file (extension included) located in `timelength/parsers/`, or the path to the parser file if stored elsewhere. 
+    - The name of this locale's parser file (extension included) located in `timelength/parsers/`, or the path to the parser file if stored elsewhere.
     - **Ensure only a trusted file is used as this could allow unintended code execution.**
     - The internal parser method must share a name with the file. Example: `parser_one.py` and `def parser_one()`.
 - `scales`
@@ -326,8 +325,8 @@ Valid JSONs must include the following keys:
 
 Once your custom JSON is filled out, you can use it as follows:
 ```python
-from timelength import TimeLength, Locale
+from timelength import Locale, TimeLength
 
-output = TimeLength("30 minutes", locale = Locale("path/to/config.json"))
+output = TimeLength("30 minutes", locale=Locale("path/to/config.json"))
 ```
 If all goes well, the parsing will succeed, and if not, an error will point you in the right direction.
