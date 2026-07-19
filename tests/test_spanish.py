@@ -203,6 +203,16 @@ def generate_notstrict_tests() -> list[ParseCase]:
     cases.append(("2 minutos y 3 minutos, 5 minutos", True, 600.0, (), ((2.0, Scale(scale=60.0)), (3.0, Scale(scale=60.0)), (5.0, Scale(scale=60.0)))))
     cases.append(("dos mil cinco segundos, veinte mil segundos", True, 22005.0, (), ((2005.0, Scale(scale=1.0)), (20000.0, Scale(scale=1.0)))))
     cases.append(("dos mil cinco, veinte mil segundos", True, 20000.0, ((2005.0, FailureFlags.LONELY_VALUE),), ((20000.0, Scale(scale=1.0)),)))
+    # Parser Edge Cases
+    cases.append(("1,-", True, 1.0, (), ((1.0, Scale(scale=1.0)),)))
+    cases.append(("1/+ segundos", False, 0.0, (("1/+", FailureFlags.MALFORMED_FRACTION), ("segundos", FailureFlags.LONELY_SCALE)), ()))
+    cases.append(("1:++ segundos", False, 0.0, (("1:+", FailureFlags.MALFORMED_HHMMSS), ("segundos", FailureFlags.LONELY_SCALE)), ()))
+    cases.append(("un cien 5,segundos", True, 5.0, (), ((5.0, Scale(scale=1.0)),)))
+    cases.append(("un cien cinco,segundos", True, 105.0, (), ((105.0, Scale(scale=1.0)),)))
+    cases.append(("de", False, 0.0, (("de", FailureFlags.UNUSED_OPERATOR),), ()))
+    cases.append(("de foo", False, 0.0, (("de", FailureFlags.UNUSED_OPERATOR), ("foo", FailureFlags.UNKNOWN_TERM)), ()))
+    cases.append(("un medio de un segundo", True, 0.5, (), ((0.5, Scale(scale=1.0)),)))
+    cases.append(("0 un segundos", True, 1.0, ((0.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
 
     return cases
 
@@ -388,6 +398,16 @@ def generate_strict_tests() -> list[ParseCase]:
     cases.append(("2 minutos y 3 minutos, 5 minutos", False, 120.0, (("3 minutos", FailureFlags.DUPLICATE_SCALE), ("5 minutos", FailureFlags.DUPLICATE_SCALE)), ((2.0, Scale(scale=60.0)),)))
     cases.append(("dos mil cinco segundos, veinte mil segundos", False, 2005.0, (("veinte mil segundos", FailureFlags.DUPLICATE_SCALE),), ((2005.0, Scale(scale=1.0)),)))
     cases.append(("dos mil cinco, veinte mil segundos", False, 20000.0, ((2005.0, FailureFlags.LONELY_VALUE),), ((20000.0, Scale(scale=1.0)),)))
+    # Parser Edge Cases
+    cases.append(("1,-", True, 1.0, (), ((1.0, Scale(scale=1.0)),)))
+    cases.append(("1/+ segundos", False, 0.0, (("1/+", FailureFlags.MALFORMED_FRACTION), ("segundos", FailureFlags.LONELY_SCALE)), ()))
+    cases.append(("1:++ segundos", False, 0.0, (("1:+", FailureFlags.MALFORMED_HHMMSS), ("segundos", FailureFlags.LONELY_SCALE)), ()))
+    cases.append(("un cien 5,segundos", True, 5.0, (), ((5.0, Scale(scale=1.0)),)))
+    cases.append(("un cien cinco,segundos", True, 105.0, (), ((105.0, Scale(scale=1.0)),)))
+    cases.append(("de", False, 0.0, (("de", FailureFlags.UNUSED_OPERATOR),), ()))
+    cases.append(("de foo", False, 0.0, (("de", FailureFlags.UNUSED_OPERATOR), ("foo", FailureFlags.UNKNOWN_TERM)), ()))
+    cases.append(("un medio de un segundo", True, 0.5, (), ((0.5, Scale(scale=1.0)),)))
+    cases.append(("0 un segundos", False, 1.0, ((0.0, FailureFlags.LONELY_VALUE),), ((1.0, Scale(scale=1.0)),)))
 
     return cases
 

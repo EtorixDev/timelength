@@ -242,7 +242,7 @@ class ParserSettings:
         Return whether the settings have been modified.
 
         #### Returns
-        - `"Default"` when every setting has its default value; otherwise, `"Modified"`.
+        - `"Default"` when every setting has its default value, otherwise, `"Modified"`.
         """
 
         return (

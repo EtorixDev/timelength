@@ -18,11 +18,18 @@ from timelength.errors import (
     PotentialDateTimeError,
     PotentialTimeDeltaError,
 )
+from timelength.parsers.parser_one import _parse_fraction  # pyright: ignore[reportPrivateUsage]
 
 
 @pytest.fixture
 def tl_notstrict() -> TimeLength:
     return TimeLength(content="0 seconds", locale=English())
+
+
+@pytest.mark.parametrize("locale", [English(), Spanish()])
+@pytest.mark.parametrize("content", ["+/2", "1/+"])
+def test_fraction_rejects_connector_only_operand(locale: Locale, content: str) -> None:
+    assert _parse_fraction(content, locale) == [(content, FailureFlags.MALFORMED_FRACTION)]
 
 
 def test_parsedtimelength_reset(tl_notstrict: TimeLength) -> None:

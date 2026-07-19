@@ -134,7 +134,7 @@ def _parse_fraction(content: str, locale: Locale) -> float | list[tuple[str, Fai
         else:
             break
 
-    if num_connectors > 1:
+    if num_connectors > 1 or num_connectors == len(fraction_segments[0]):
         return [(content, FailureFlags.MALFORMED_FRACTION)]
 
     num_connectors = 0
@@ -145,7 +145,7 @@ def _parse_fraction(content: str, locale: Locale) -> float | list[tuple[str, Fai
         else:
             break
 
-    if num_connectors > 1:
+    if num_connectors > 1 or num_connectors == len(fraction_segments[1]):
         return [(content, FailureFlags.MALFORMED_FRACTION)]
 
     numerator = _parse_number(fraction_segments[0], locale)
@@ -197,11 +197,8 @@ def _parse_hhmmss(content: str, locale: Locale) -> list[float] | list[tuple[str,
         if num_connectors > 2:
             return [(content, FailureFlags.MALFORMED_HHMMSS)]
 
-        for char in reversed(hhmmss_segment):
-            if char in locale.connectors:
-                return [(content, FailureFlags.MALFORMED_HHMMSS)]
-            else:
-                break
+        if hhmmss_segment[-1] in locale.connectors:
+            return [(content, FailureFlags.MALFORMED_HHMMSS)]
 
         if any(item in hhmmss_segment for item in locale.fraction_delimiters):
             value = _parse_fraction(hhmmss_segment, locale)
@@ -560,9 +557,9 @@ def parser_one(content: str, locale: Locale) -> ParsedTimeLength:
                     reset_segment_progress = True
                 else:
                     previous_specials.append(current_value)
-        elif current_value_type is ValueType.NUMERAL:
+        elif current_value_type is ValueType.NUMERAL:  # pragma: no branch - ValueType is exhaustively handled.
             current_value = cast(str, current_value)
-            numeral = cast(Numeral, locale.get_numeral(current_value))
+            numeral = cast(Numeral, current_numeral)
             current_value_type_converted = ValueType.NUMBER if current_numeral_type is not NumeralType.OPERATOR else current_value_type_converted
             next_index: int = index + 1
             connectors_before_segmentor: int = 0
@@ -600,9 +597,10 @@ def parser_one(content: str, locale: Locale) -> ParsedTimeLength:
                     if previous_value_type is ValueType.NUMERAL:
                         previous_numeral = locale.get_numeral(str(potential_values[index - 2][0]))
 
-                        if previous_numeral:
-                            previous_numeric = True
-                            previous_value = previous_numeral.value
+                        assert isinstance(previous_numeral, Numeral)
+
+                        previous_numeric = True
+                        previous_value = previous_numeral.value
                     elif previous_value_type is ValueType.NUMBER:
                         previous_numeric = True
                         previous_value = cast(float, potential_values[index - 2][0])
@@ -616,11 +614,10 @@ def parser_one(content: str, locale: Locale) -> ParsedTimeLength:
                         next_multiplier = True
 
                     if next_value_type is ValueType.NUMERAL:
-                        next_numeral = locale.get_numeral(str(potential_values[index + 2][0]))
+                        assert isinstance(next_numeral, Numeral)
 
-                        if next_numeral:
-                            next_numeric = True
-                            next_value = next_numeral.value
+                        next_numeric = True
+                        next_value = next_numeral.value
                     elif next_value_type is ValueType.NUMBER:
                         next_numeric = True
                         next_value = cast(float, potential_values[index + 2][0])
@@ -745,9 +742,7 @@ def parser_one(content: str, locale: Locale) -> ParsedTimeLength:
                     invalid.append((segment_value, FailureFlags.LONELY_VALUE))
                     segment_value = None
 
-                if parsed_value:
-                    invalid.append((parsed_value, FailureFlags.LONELY_VALUE))
-
+                invalid.append((parsed_value, FailureFlags.LONELY_VALUE))
                 parsed_value = numeral.value
 
         # Update previous variables and reset current variables for the next loop.
